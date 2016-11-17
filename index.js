@@ -85,9 +85,11 @@ const schema = buildSchema(`
 
 function main () {
   return Promise.coroutine(function * () {
-    const db = yield connectMongo()
+    const DEFAULT_MONGO_URL = 'mongodb://127.0.0.1:27017/bemuse'
+    const db = yield connectMongo(process.env.MONGO_URL || DEFAULT_MONGO_URL)
+    const port = +process.env.PORT || 8008
     const root = createRoot({ db })
-    runGraphQLServer(root)
+    runGraphQLServer(port, root)
   })()
 }
 
@@ -135,9 +137,8 @@ function toHighScoreObject (doc, index) {
 }
 main().catch((e) => setTimeout(() => { throw e }))
 
-function connectMongo () {
+function connectMongo (mongoUrl) {
   const logger = log4js.getLogger('MongoDB')
-  const mongoUrl = 'mongodb://127.0.0.1:27017/bemuse'
   logger.info('Connecting to MongoDB...')
   return MongoClient.connect(mongoUrl).then((db) => {
     logger.info('Connected to MongoDB!')
@@ -145,7 +146,7 @@ function connectMongo () {
   })
 }
 
-function runGraphQLServer (rootValue) {
+function runGraphQLServer (port, rootValue) {
   const app = express()
   const logger = log4js.getLogger('HTTP')
   app.use(log4js.connectLogger(logger, { level: log4js.levels.INFO }))
@@ -154,7 +155,7 @@ function runGraphQLServer (rootValue) {
     rootValue: rootValue,
     graphiql: true
   }))
-  app.listen(+process.env.PORT || 8008, function (err) {
+  app.listen(port, function (err) {
     if (err) throw err
     const address = this.address()
     logger.info('Listening on port ' + address.port)
