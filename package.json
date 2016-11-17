@@ -1,0 +1,20 @@
+{
+  "name": "bemuse-scoreboard",
+  "version": "1.0.0",
+  "description": "Scoreboard server for Bemuse with GraphQL!",
+  "main": "index.js",
+  "author": "Thai Pangsakulyanont <flicknote@spacet.me>",
+  "license": "MIT",
+  "dependencies": {
+    "bluebird": "^3.4.6",
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "express-graphql": "^0.6.1",
+    "graphql": "^0.8.1",
+    "log4js": "^1.0.1",
+    "mongodb": "^2.2.11"
+  },
+  "devDependencies": {
+    "standard": "^8.5.0"
+  }
+}
