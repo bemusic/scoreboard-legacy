@@ -18,6 +18,7 @@
     "mongodb": "^2.2.11"
   },
   "devDependencies": {
+    "jest": "^17.0.3",
     "standard": "^8.5.0"
   },
   "engines": {
