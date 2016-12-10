@@ -8,12 +8,11 @@ function createRoot ({ rankingEntryRepository }) {
           return {
             leaderboard ({ max }) {
               max = Math.max(1, Math.min(max || 50, 50))
-              return rankingEntryRepository.fetchLeaderboardEntries({
-                md5,
-                playMode,
-                max
-              })
-              .then(rank)
+              const options = { md5, playMode, max }
+              return (rankingEntryRepository
+                .fetchLeaderboardEntries(options)
+                .then(rank)
+              )
             }
           }
         }
