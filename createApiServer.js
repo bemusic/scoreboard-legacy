@@ -43,7 +43,8 @@ function createLegacyUserApi (apiKey, legacyUserRepository) {
   })
   router.post('/check', function (req, res, next) {
     const usernameOrEmail = String(req.body.usernameOrEmail)
-    Promise.resolve(legacyUserRepository.findUser(usernameOrEmail))
+    const password = String(req.body.password)
+    Promise.resolve(authenticate(usernameOrEmail, password))
     .then((user) => {
       if (!user) {
         res.status(401).json({ error: 'Unauthenticated' })
@@ -54,6 +55,15 @@ function createLegacyUserApi (apiKey, legacyUserRepository) {
     .catch(next)
   })
   return router
+
+  function authenticate (usernameOrEmail, password) {
+    return Promise.resolve(legacyUserRepository.findUser(usernameOrEmail))
+    .then((user) => {
+      if (!user) return false
+      // TODO perform actual authentication
+      return true
+    })
+  }
 }
 
 module.exports = createApiServer
