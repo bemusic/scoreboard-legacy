@@ -9,6 +9,7 @@ const schema = require('./schema')
 function createApiServer ({
   logger,
   rankingEntryRepository,
+  legacyUserApiKey,
   legacyUserRepository
 } = { }) {
   const app = express()
@@ -19,7 +20,7 @@ function createApiServer ({
   }
 
   // Legacy user
-  app.use('/legacyusers', createLegacyUserApi(legacyUserRepository))
+  app.use('/legacyusers', createLegacyUserApi(legacyUserApiKey, legacyUserRepository))
 
   // GraphQL
   if (rankingEntryRepository) {
@@ -30,8 +31,16 @@ function createApiServer ({
   return app
 }
 
-function createLegacyUserApi () {
+function createLegacyUserApi (apiKey, legacyUserRepository) {
   const router = express.Router()
+  router.use(require('body-parser').urlencoded({ extended: false }))
+  router.use(function (req, res, next) {
+    if (req.body.apiKey !== apiKey) {
+      res.status(400).json({ error: 'Invalid API key.' })
+      return
+    }
+    next()
+  })
   router.post('/check', function (req, res, next) {
     // TODO
     res.end('')

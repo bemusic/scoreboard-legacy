@@ -40,7 +40,7 @@ describe('The API server', () => {
         .expect(401)
     })
 
-    xit('returns 400 if bad api key', () => {
+    it('returns 400 if bad api key', () => {
       return request(app)
         .post('/legacyusers/check')
         .type('form').send({ usernameOrEmail: 'ABC', password: 'meow', apiKey: 'bad' })

@@ -12,6 +12,8 @@ function main () {
     const port = +process.env.PORT || 8008
     const app = createApiServer({
       logger: log4js.getLogger('HTTP'),
+      // TODO legacyUserApiKey
+      // TODO legacyUserRepository
       rankingEntryRepository: factory.createRankingEntryRepository()
     })
     runApiServer(app, port)
