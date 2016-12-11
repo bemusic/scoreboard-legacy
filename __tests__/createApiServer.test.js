@@ -30,12 +30,20 @@ describe('The API server', () => {
       })
     })
 
-    it('can authenticate', () => {
+    it('can authenticate using username', () => {
       return request(app)
         .post('/legacyusers/check')
         .type('form').send({ usernameOrEmail: 'ABC', password: 'meow', apiKey: API_KEY })
         .expect(200)
         .expect(/"email":"abc@test.test"/)
+    })
+
+    it('can authenticate using email', () => {
+      return request(app)
+        .post('/legacyusers/check')
+        .type('form').send({ usernameOrEmail: 'abc@test.test', password: 'meow', apiKey: API_KEY })
+        .expect(200)
+        .expect(/"username":"ABC"/)
     })
 
     it('returns 401 if user not found', () => {
