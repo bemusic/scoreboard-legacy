@@ -15,6 +15,22 @@ function MongoDBRepositoryFactory ({ db }) {
           )
         }
       }
+    },
+    createLegacyUserRepository () {
+      return {
+        findUser (usernameOrEmail) {
+          return (db
+            .collection('LegacyUser')
+            .find({
+              $or: [
+                { email: usernameOrEmail },
+                { username: usernameOrEmail }
+              ]
+            })
+            .limit(1)
+          )
+        }
+      }
     }
   }
 }

@@ -6,14 +6,25 @@ const request = require('supertest')
 describe('The API server', () => {
   describe('legacy users', () => {
     const API_KEY = '__dummy_api_key__'
+    const DUMMY_USER = {
+      username: 'ABC',
+      email: 'abc@test.test',
+      hashedPassword: '$2a$08$slf.HjrpyEjFgg/HvVW0FuWzCoRNI8eW0Ei4PM.5o6ImHt7lA/Xze'
+    }
     let app
 
     beforeAll(() => {
       app = createApiServer({
         legacyUserApiKey: API_KEY,
         legacyUserRepository: {
-          findUser (email) {
-            return { username: 'ABC', email: 'abc@test.test', hashedPassword: 'meow' }
+          findUser (usernameOrEmail) {
+            if (usernameOrEmail === DUMMY_USER.username) {
+              return Promise.resolve(DUMMY_USER)
+            }
+            if (usernameOrEmail === DUMMY_USER.email) {
+              return Promise.resolve(DUMMY_USER)
+            }
+            return Promise.resolve(null)
           }
         }
       })
@@ -26,7 +37,7 @@ describe('The API server', () => {
         .expect(200)
     })
 
-    xit('returns 401 if user not found', () => {
+    it('returns 401 if user not found', () => {
       return request(app)
         .post('/legacyusers/check')
         .type('form').send({ usernameOrEmail: 'ABCX', password: 'meow', apiKey: API_KEY })
