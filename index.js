@@ -1,11 +1,8 @@
-const graphqlHTTP = require('express-graphql')
 const log4js = require('log4js')
 const MongoClient = require('mongodb').MongoClient
-const express = require('express')
 const Promise = require('bluebird')
 const MongoDBRepositoryFactory = require('./MongoDBRepositoryFactory')
-const createRoot = require('./createRoot')
-const schema = require('./schema')
+const createApiServer = require('./createApiServer')
 
 function main () {
   return Promise.coroutine(function * () {
@@ -13,10 +10,11 @@ function main () {
     const db = yield connectMongo(process.env.MONGO_URL || DEFAULT_MONGO_URL)
     const factory = new MongoDBRepositoryFactory({ db })
     const port = +process.env.PORT || 8008
-    const root = createRoot({
+    const app = createApiServer({
+      logger: log4js.getLogger('HTTP'),
       rankingEntryRepository: factory.createRankingEntryRepository()
     })
-    runGraphQLServer(port, root)
+    runApiServer(app, port)
   })()
 }
 
@@ -31,18 +29,10 @@ function connectMongo (mongoUrl) {
   })
 }
 
-function runGraphQLServer (port, rootValue) {
-  const app = express()
-  const logger = log4js.getLogger('HTTP')
-  app.use(log4js.connectLogger(logger, { level: log4js.levels.INFO }))
-  app.use(graphqlHTTP({
-    schema: schema,
-    rootValue: rootValue,
-    graphiql: true
-  }))
+function runApiServer (app, port) {
   app.listen(port, function (err) {
     if (err) throw err
     const address = this.address()
-    logger.info('Listening on port ' + address.port)
+    log4js.getLogger('HTTP').info('Listening on port ' + address.port)
   })
 }
