@@ -51,7 +51,11 @@ function createLegacyUserApi (apiKey, legacyUserRepository) {
         res.status(401).json({ error: 'Unauthenticated' })
         return
       }
-      res.json({ })
+      res.json({
+        username: user.username,
+        email: user.email,
+        emailVerified: user.emailVerified
+      })
     })
     .catch(next)
   })

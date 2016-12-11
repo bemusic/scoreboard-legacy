@@ -35,6 +35,7 @@ describe('The API server', () => {
         .post('/legacyusers/check')
         .type('form').send({ usernameOrEmail: 'ABC', password: 'meow', apiKey: API_KEY })
         .expect(200)
+        .expect(/"email":"abc@test.test"/)
     })
 
     it('returns 401 if user not found', () => {
