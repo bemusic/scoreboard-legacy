@@ -2,6 +2,7 @@
 const log4js = require('log4js')
 const express = require('express')
 const graphqlHTTP = require('express-graphql')
+const bcrypt = require('bcrypt')
 
 const createRoot = require('./createRoot')
 const schema = require('./schema')
@@ -60,8 +61,9 @@ function createLegacyUserApi (apiKey, legacyUserRepository) {
     return Promise.resolve(legacyUserRepository.findUser(usernameOrEmail))
     .then((user) => {
       if (!user) return false
-      // TODO perform actual authentication
-      return true
+      return bcrypt.compare(password, user.hashedPassword).then((result) =>
+        result && user
+      )
     })
   }
 }

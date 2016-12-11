@@ -44,7 +44,7 @@ describe('The API server', () => {
         .expect(401)
     })
 
-    xit('returns 401 if user password incorrect', () => {
+    it('returns 401 if user password incorrect', () => {
       return request(app)
         .post('/legacyusers/check')
         .type('form').send({ usernameOrEmail: 'ABC', password: 'meoww', apiKey: API_KEY })
