@@ -35,6 +35,7 @@ describe('Bemuse authentication flow...', () => {
       env.loginByUsernamePassword('meow', 'pwd').mustFail()
       return env.verify()
     })
+    it('should link the player after successful')
   })
 
   describe('sign up with username, email and password', () => {
@@ -58,6 +59,12 @@ describe('Bemuse authentication flow...', () => {
       env.signUp('DJTHAI', 'thai@bemuse.ninja', 'strongpassword').mustFail()
       return env.verify()
     })
+    xit('should link the player after successful', () => {
+      const env = createEnv()
+      env.signUp('DJTHAI', 'thai@bemuse.ninja', 'strongpassword').mustSucceed()
+      env.playerWithName('DJTHAI').shouldBeLinkedTo('thai@bemuse.ninja')
+      return env.verify()
+    })
   })
 
   describe('edge cases', () => {
@@ -75,198 +82,212 @@ describe('Bemuse authentication flow...', () => {
       it('should ask for player name and try to register')
     })
   })
+})
 
-  function createEnv () {
-    const legacyUserByUsername = { }
-    const legacyUserByEmail = { }
-    const playerByPlayerName = { }
-    const playerById = { }
-    const actions = [ ]
-    let nextPlayerId = 0
+function createEnv () {
+  const legacyUserByUsername = { }
+  const legacyUserByEmail = { }
+  const playerByPlayerName = { }
+  const playerById = { }
+  const actions = [ ]
+  let nextPlayerId = 0
 
-    function queue (action) {
-      actions.push(action)
-    }
+  function queue (action) {
+    actions.push(action)
+  }
 
-    // This is Auth0.
-    const externalProvider = (() => {
-      const userByUsername = { }
-      const userByEmail = { }
-      let nextUserId = 0
-      return {
-        login (username, password) {
-          return Promise.resolve((() => {
-            const user = userByEmail[username] || userByUsername[username] || (() => {
-              // Try to register using our custom script.
-              const result = databaseLogIn(username, password)
-              if (result) {
-                const newUser = { username, email: result.email, password }
-                register(newUser)
-                return newUser
-              }
-            })()
-            if (!user) return { error: 'no user' }
-            if (user.password !== password) return { error: 'wrong password' }
-            const idToken = generateToken(user)
-            return { idToken }
-          })())
-        },
-        signUp (username, email, password) {
-          return Promise.resolve((() => {
-            if (userByUsername[username]) return { error: 'username duplicate' }
-            if (userByEmail[username]) return { error: 'email duplicate' }
-            if (databaseGetUser(email)) return { error: 'database user conflict email' }
-            if (databaseGetUser(username)) return { error: 'database user conflict name' }
-            const user = { username, email, password }
-            register(user)
-            const idToken = generateToken(user)
-            return { userId: user._id, idToken }
-          })())
-        }
-      }
-
-      function register (user) {
-        user._id = 'u' + (nextUserId++)
-        userByUsername[user.username] = user
-        userByEmail[user.email] = user
-      }
-
-      function generateToken (user) {
-        return { validToken: true, userId: user._id, email: user.email }
-      }
-
-      // Our custom code that we host at Auth0
-      function databaseLogIn (username, password) {
-        const user = legacyUserByEmail[username] || (() => {
-          const player = playerById[username]
-          return player && legacyUserByUsername[player.playerName]
-        })()
-        if (user.password === password) {
-          return user
-        }
-        return null
-      }
-
-      function databaseGetUser (username) {
-        const user = legacyUserByEmail[username] || (() => {
-          const player = playerById[username]
-          return player && legacyUserByUsername[player.playerName]
-        })()
+  // This is Auth0.
+  const externalProvider = createExternalAuthProvider({
+    databaseLogIn (username, password) {
+      const user = legacyUserByEmail[username] || (() => {
+        const player = playerById[username]
+        return player && legacyUserByUsername[player.playerName]
+      })()
+      if (user.password === password) {
         return user
       }
-    })()
-
-    function registerPlayer (playerName) {
-      const _id = 'player' + (nextPlayerId++)
-      const player = { playerName, _id }
-      playerByPlayerName[playerName] = player
-      playerById[_id] = player
-      return player
+      return null
+    },
+    databaseGetUser (username) {
+      const user = legacyUserByEmail[username] || (() => {
+        const player = playerById[username]
+        return player && legacyUserByUsername[player.playerName]
+      })()
+      return user
     }
+  })
 
-    return {
-      givenLegacyUser (username, email, password) {
-        const user = { username, email, password }
-        legacyUserByUsername[username] = user
-        legacyUserByEmail[email] = user
-      },
-      givenPlayer (playerName) {
-        registerPlayer(playerName)
-      },
-      verify () {
-        return Promise.coroutine(function * () {
-          for (const action of actions) yield Promise.resolve(action())
-        })()
-      },
-      externalSignUp (username, email, password) {
-        let result
-        queue(() => externalProvider.signUp(username, email, password)
-          .then((_result) => { result = _result })
-        )
-        return {
-          mustFail () {
-            queue(() => {
-              expect(result.error).toBeTruthy()
-            })
+  function registerPlayer (playerName) {
+    const _id = 'player' + (nextPlayerId++)
+    const player = { playerName, _id }
+    playerByPlayerName[playerName] = player
+    playerById[_id] = player
+    return player
+  }
+
+  function doSignUp (username, email, password) {
+    return Promise.coroutine(authenticationFlow.signUp)(
+      username,
+      email,
+      password,
+      {
+        log: () => { },
+        checkPlayerNameAvailability (playerName) {
+          if (legacyUserByUsername[playerName]) {
+            return Promise.resolve(false)
           }
+          const player = !playerByPlayerName[playerName]
+          if (!player) return Promise.resolve(true)
+          if (player.linked) return Promise.resolve(false)
+          return Promise.resolve(true)
+        },
+        userSignUp (username, email, password) {
+          return externalProvider.signUp(username, email, password)
+        },
+        reservePlayerId (playerName) {
+          const player = playerByPlayerName[playerName] || registerPlayer(playerName)
+          return Promise.resolve(player._id)
         }
-      },
-      signUp (username, email, password) {
-        let result
-        queue(() => (
-          Promise.coroutine(authenticationFlow.signUp)(
-            username, email, password, {
-              log: () => { },
-              checkPlayerNameAvailability (playerName) {
-                if (legacyUserByUsername[playerName]) {
-                  return Promise.resolve(false)
-                }
-                const player = !playerByPlayerName[playerName]
-                if (!player) return Promise.resolve(true)
-                if (player.linked) return Promise.resolve(false)
-                return Promise.resolve(true)
-              },
-              userSignUp (username, email, password) {
-                return externalProvider.signUp(username, email, password)
-              },
-              reservePlayerId (playerName) {
-                const player = playerByPlayerName[playerName] || registerPlayer(playerName)
-                return Promise.resolve(player._id)
-              }
-            }
+      }
+    )
+  }
+
+  function doLoginByUsernamePassword (username, password) {
+    return Promise.coroutine(authenticationFlow.loginByUsernamePassword)(
+      username,
+      password,
+      {
+        log: () => { },
+        usernamePasswordLogin (username, password) {
+          return externalProvider.login(username, password)
+        },
+        resolvePlayerId (playerName) {
+          const result = playerByPlayerName[playerName]
+          return Promise.resolve(result
+            ? { playerId: result._id }
+            : { error: 'no found' }
           )
-          .then((_result) => { result = _result })
-        ))
-        return {
-          mustSucceed () {
-            queue(() => {
-              if (!result.idToken) {
-                throw new Error('Error: ' + result.error)
-              }
-            })
-          },
-          mustFail () {
-            queue(() => {
-              expect(result.error).toBeTruthy()
-            })
-          }
         }
-      },
-      loginByUsernamePassword (username, password) {
-        let result
-        queue(() => (
-          Promise.coroutine(authenticationFlow.loginByUsernamePassword)(
-            username, password, {
-              log: () => { },
-              usernamePasswordLogin (username, password) {
-                return externalProvider.login(username, password)
-              },
-              resolvePlayerId (playerName) {
-                const result = playerByPlayerName[playerName]
-                return Promise.resolve(result
-                  ? { playerId: result._id }
-                  : { error: 'no found' }
-                )
-              }
+      }
+    )
+  }
+
+  return {
+    givenLegacyUser (username, email, password) {
+      const user = { username, email, password }
+      legacyUserByUsername[username] = user
+      legacyUserByEmail[email] = user
+    },
+    givenPlayer (playerName) {
+      registerPlayer(playerName)
+    },
+    verify () {
+      return Promise.coroutine(function * () {
+        for (const action of actions) yield Promise.resolve(action())
+      })()
+    },
+    externalSignUp (username, email, password) {
+      let result
+      queue(() => externalProvider.signUp(username, email, password)
+        .then((_result) => { result = _result })
+      )
+      return {
+        mustFail () {
+          queue(() => {
+            expect(result.error).toBeTruthy()
+          })
+        }
+      }
+    },
+    signUp (username, email, password) {
+      let result
+      queue(() => doSignUp(username, email, password)
+        .then((_result) => { result = _result })
+      )
+      return {
+        mustSucceed () {
+          queue(() => {
+            if (!result.idToken) {
+              throw new Error('Error: ' + result.error)
             }
-          )
-          .then((_result) => { result = _result })
-        ))
-        return {
-          mustSucceed () {
-            queue(() => {
-              if (!result.idToken) {
-                throw new Error('Error: ' + result.error)
-              }
-            })
-          },
-          mustFail () {
-            queue(() => {
-              expect(result.error).toBeTruthy()
-            })
-          }
+          })
+        },
+        mustFail () {
+          queue(() => {
+            expect(result.error).toBeTruthy()
+          })
+        }
+      }
+    },
+    loginByUsernamePassword (username, password) {
+      let result
+      queue(() => doLoginByUsernamePassword(username, password)
+        .then((_result) => { result = _result })
+      )
+      return {
+        mustSucceed () {
+          queue(() => {
+            if (!result.idToken) {
+              throw new Error('Error: ' + result.error)
+            }
+          })
+        },
+        mustFail () {
+          queue(() => {
+            expect(result.error).toBeTruthy()
+          })
         }
       }
     }
   }
-})
+}
+
+function createExternalAuthProvider ({
+  databaseLogIn,
+  databaseGetUser
+}) {
+  const userByUsername = { }
+  const userByEmail = { }
+  let nextUserId = 0
+  return {
+    login (username, password) {
+      return Promise.resolve((() => {
+        const user = userByEmail[username] || userByUsername[username] || (() => {
+          // Try to register using our custom script.
+          const result = databaseLogIn(username, password)
+          if (result) {
+            const newUser = { username, email: result.email, password }
+            register(newUser)
+            return newUser
+          }
+        })()
+        if (!user) return { error: 'no user' }
+        if (user.password !== password) return { error: 'wrong password' }
+        const idToken = generateToken(user)
+        return { idToken }
+      })())
+    },
+    signUp (username, email, password) {
+      return Promise.resolve((() => {
+        if (userByUsername[username]) return { error: 'username duplicate' }
+        if (userByEmail[username]) return { error: 'email duplicate' }
+        if (databaseGetUser(email)) return { error: 'database user conflict email' }
+        if (databaseGetUser(username)) return { error: 'database user conflict name' }
+        const user = { username, email, password }
+        register(user)
+        const idToken = generateToken(user)
+        return { userId: user._id, idToken }
+      })())
+    }
+  }
+
+  function register (user) {
+    user._id = 'u' + (nextUserId++)
+    userByUsername[user.username] = user
+    userByEmail[user.email] = user
+  }
+
+  function generateToken (user) {
+    return { validToken: true, userId: user._id, email: user.email }
+  }
+}
