@@ -52,13 +52,7 @@ function createLegacyUserApi (apiKey, legacyUserRepository) {
         res.status(401).json({ error: 'Unauthenticated' })
         return
       }
-      res.json({
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        emailVerified: user.emailVerified,
-        createdAt: user.createdAt
-      })
+      res.json(formatUser(user))
     })
     .catch(next)
   })
@@ -71,18 +65,22 @@ function createLegacyUserApi (apiKey, legacyUserRepository) {
         res.status(404).json({ error: 'Not found' })
         return
       }
-      res.json({
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        emailVerified: user.emailVerified,
-        createdAt: user.createdAt
-      })
+      res.json(formatUser(user))
     })
     .catch(next)
   })
 
   return router
+
+  function formatUser (user) {
+    return {
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      emailVerified: user.emailVerified,
+      createdAt: user.createdAt
+    }
+  }
 
   function authenticate (usernameOrEmail, password) {
     return Promise.resolve(legacyUserRepository.findUser(usernameOrEmail))
