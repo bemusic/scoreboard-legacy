@@ -37,6 +37,16 @@ describe('Bemuse authentication flow...', () => {
     })
   })
 
+  xdescribe('sign up', () => {
+    it('can sign up as new user', () => {
+      const env = createEnv()
+      env.signUp('DJTHAI', 'thai@bemuse.ninja', 'strongpassword').mustSucceed()
+      env.loginByUsernamePassword('DJTHAI', 'strongpassword').mustSucceed()
+      env.loginByUsernamePassword('thai@bemuse.ninja', 'strongpassword').mustSucceed()
+      return env.verify()
+    })
+  })
+
   function createEnv () {
     const legacyUserByUsername = { }
     const legacyUserByEmail = { }
@@ -112,11 +122,35 @@ describe('Bemuse authentication flow...', () => {
       },
       verify () {
         return Promise.coroutine(function * () {
-          for (const action of actions) yield action()
+          for (const action of actions) yield Promise.resolve(action())
         })()
       },
+      signUp (username, email, password) {
+        let result
+        queue(() => (
+          Promise.coroutine(authenticationFlow.signUp)(
+            username, email, password, { }
+          )
+          .then((_result) => { result = _result })
+        ))
+        return {
+          mustSucceed () {
+            queue(() => {
+              if (!result.idToken) {
+                throw new Error('Error: ' + result.error)
+              }
+            })
+          },
+          mustFail () {
+            queue(() => {
+              expect(result.error).toBeTruthy()
+            })
+          }
+        }
+      },
       loginByUsernamePassword (username, password) {
-        const run = () => (
+        let result
+        queue(() => (
           Promise.coroutine(authenticationFlow.loginByUsernamePassword)(
             username, password, {
               usernamePasswordLogin (username, password) {
@@ -131,19 +165,20 @@ describe('Bemuse authentication flow...', () => {
               }
             }
           )
-        )
+          .then((_result) => { result = _result })
+        ))
         return {
           mustSucceed () {
-            queue(() => run().then((result) => {
+            queue(() => {
               if (!result.idToken) {
                 throw new Error('Error: ' + result.error)
               }
-            }))
+            })
           },
           mustFail () {
-            queue(() => run().then((result) => {
+            queue(() => {
               expect(result.error).toBeTruthy()
-            }))
+            })
           }
         }
       }
