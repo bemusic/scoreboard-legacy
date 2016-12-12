@@ -59,7 +59,7 @@ describe('Bemuse authentication flow...', () => {
       env.signUp('DJTHAI', 'thai@bemuse.ninja', 'strongpassword').mustFail()
       return env.verify()
     })
-    xit('should link the player after successful', () => {
+    it('should link the player after successful', () => {
       const env = createEnv()
       env.signUp('DJTHAI', 'thai@bemuse.ninja', 'strongpassword').mustSucceed()
       env.playerWithName('DJTHAI').shouldBeLinkedTo('thai@bemuse.ninja')
@@ -103,8 +103,9 @@ function createEnv () {
         const player = playerById[username]
         return player && legacyUserByUsername[player.playerName]
       })()
+      const player = playerByPlayerName[user.username]
       if (user.password === password) {
-        return user
+        return { username: player._id, email: user.email }
       }
       return null
     },
@@ -114,8 +115,21 @@ function createEnv () {
         return player && legacyUserByUsername[player.playerName]
       })()
       return user
+    },
+    rule (user) {
+      if (user.email && !user.playerName) {
+        const player = link(user._id, user.username)
+        user.playerId = player._id
+        user.playerName = player.playerName
+      }
     }
   })
+
+  function link (userId, playerId) {
+    const player = playerById[playerId]
+    player.linkedTo = userId
+    return player
+  }
 
   function registerPlayer (playerName) {
     const _id = 'player' + (nextPlayerId++)
@@ -186,6 +200,17 @@ function createEnv () {
         for (const action of actions) yield Promise.resolve(action())
       })()
     },
+    playerWithName (playerName) {
+      return {
+        shouldBeLinkedTo (email) {
+          queue(() => {
+            const player = playerByPlayerName[playerName]
+            const target = externalProvider.getUserByEmail(email)
+            expect(player.linkedTo).toBe(target._id)
+          })
+        }
+      }
+    },
     externalSignUp (username, email, password) {
       let result
       queue(() => externalProvider.signUp(username, email, password)
@@ -244,7 +269,8 @@ function createEnv () {
 
 function createExternalAuthProvider ({
   databaseLogIn,
-  databaseGetUser
+  databaseGetUser,
+  rule
 }) {
   const userByUsername = { }
   const userByEmail = { }
@@ -256,13 +282,14 @@ function createExternalAuthProvider ({
           // Try to register using our custom script.
           const result = databaseLogIn(username, password)
           if (result) {
-            const newUser = { username, email: result.email, password }
+            const newUser = { username: result.username, email: result.email, password }
             register(newUser)
             return newUser
           }
         })()
         if (!user) return { error: 'no user' }
         if (user.password !== password) return { error: 'wrong password' }
+        rule(user)
         const idToken = generateToken(user)
         return { idToken }
       })())
@@ -275,9 +302,13 @@ function createExternalAuthProvider ({
         if (databaseGetUser(username)) return { error: 'database user conflict name' }
         const user = { username, email, password }
         register(user)
+        rule(user)
         const idToken = generateToken(user)
         return { userId: user._id, idToken }
       })())
+    },
+    getUserByEmail (email) {
+      return userByEmail[email]
     }
   }
 
