@@ -41,3 +41,16 @@ function * loginByUsernamePassword (username, password, {
     return { idToken: result.idToken }
   }
 }
+
+exports.signUp =
+function * loginByUsernamePassword (username, email, password, {
+  log = (message) => console.log('[loginByUsernamePassword]', message),
+  checkPlayerNameAvailability
+}) {
+  log('Checking player name availability...')
+  const available = yield checkPlayerNameAvailability(username)
+
+  if (!available) {
+    return { error: 'Player name already taken.' }
+  }
+}

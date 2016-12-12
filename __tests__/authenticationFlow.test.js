@@ -37,13 +37,31 @@ describe('Bemuse authentication flow...', () => {
     })
   })
 
-  xdescribe('sign up', () => {
-    it('can sign up as new user', () => {
+  describe('sign up with username, email and password', () => {
+    xit('can sign up as new user', () => {
       const env = createEnv()
       env.signUp('DJTHAI', 'thai@bemuse.ninja', 'strongpassword').mustSucceed()
       env.loginByUsernamePassword('DJTHAI', 'strongpassword').mustSucceed()
       env.loginByUsernamePassword('thai@bemuse.ninja', 'strongpassword').mustSucceed()
       return env.verify()
+    })
+    it('cannot sign up if legacy user already exist', () => {
+      const env = createEnv()
+      env.givenLegacyUser('DJTHAI', 'thai@another.place', 'wow')
+      env.signUp('DJTHAI', 'thai@bemuse.ninja', 'strongpassword').mustFail()
+      return env.verify()
+    })
+    xit('cannot sign up if email already exist as legacy user', () => {
+      const env = createEnv()
+      env.givenLegacyUser('THAI', 'thai@bemuse.ninja', 'wow')
+      env.signUp('DJTHAI', 'thai@bemuse.ninja', 'strongpassword').mustFail()
+      return env.verify()
+    })
+  })
+
+  describe('edge cases', () => {
+    describe('hijacking user by creating account with existing player id as username', () => {
+      it('should be prevented')
     })
   })
 
@@ -129,7 +147,17 @@ describe('Bemuse authentication flow...', () => {
         let result
         queue(() => (
           Promise.coroutine(authenticationFlow.signUp)(
-            username, email, password, { }
+            username, email, password, {
+              checkPlayerNameAvailability (playerName) {
+                if (legacyUserByUsername[playerName]) {
+                  return Promise.resolve(false)
+                }
+                const player = !playerByPlayerName[playerName]
+                if (!player) return Promise.resolve(true)
+                if (player.linked) return Promise.resolve(false)
+                return Promise.resolve(true)
+              }
+            }
           )
           .then((_result) => { result = _result })
         ))
@@ -153,6 +181,7 @@ describe('Bemuse authentication flow...', () => {
         queue(() => (
           Promise.coroutine(authenticationFlow.loginByUsernamePassword)(
             username, password, {
+              log: () => { },
               usernamePasswordLogin (username, password) {
                 return externalProvider.login(username, password)
               },
