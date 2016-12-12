@@ -42,6 +42,7 @@ function createLegacyUserApi (apiKey, legacyUserRepository) {
     }
     next()
   })
+
   router.post('/check', function (req, res, next) {
     const usernameOrEmail = String(req.body.usernameOrEmail)
     const password = String(req.body.password)
@@ -61,6 +62,26 @@ function createLegacyUserApi (apiKey, legacyUserRepository) {
     })
     .catch(next)
   })
+
+  router.post('/get', function (req, res, next) {
+    const usernameOrEmail = String(req.body.usernameOrEmail)
+    Promise.resolve(legacyUserRepository.findUser(usernameOrEmail))
+    .then((user) => {
+      if (!user) {
+        res.status(404).json({ error: 'Not found' })
+        return
+      }
+      res.json({
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        createdAt: user.createdAt
+      })
+    })
+    .catch(next)
+  })
+
   return router
 
   function authenticate (usernameOrEmail, password) {

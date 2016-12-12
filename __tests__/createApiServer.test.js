@@ -90,7 +90,7 @@ describe('The API server', () => {
       })
     })
 
-    xdescribe('get user', () => {
+    describe('get user', () => {
       it('can get using username', () => {
         return request(app)
           .post('/legacyusers/get')
