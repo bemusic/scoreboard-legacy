@@ -32,60 +32,62 @@ describe('The API server', () => {
       })
     })
 
-    it('can authenticate using username', () => {
-      return request(app)
-        .post('/legacyusers/check')
-        .type('form').send({ usernameOrEmail: 'ABC', password: 'meow', apiKey: API_KEY })
-        .expect(200)
-    })
-
-    it('can authenticate using email', () => {
-      return request(app)
-        .post('/legacyusers/check')
-        .type('form').send({ usernameOrEmail: 'abc@test.test', password: 'meow', apiKey: API_KEY })
-        .expect(200)
-    })
-
-    describe('a successful request', () => {
-      function successfulRequest () {
+    describe('authentication', () => {
+      it('can authenticate using username', () => {
         return request(app)
           .post('/legacyusers/check')
           .type('form').send({ usernameOrEmail: 'ABC', password: 'meow', apiKey: API_KEY })
           .expect(200)
-      }
-      it('returns email', () => {
-        return successfulRequest().expect(/"email":"abc@test.test"/)
       })
-      it('returns username', () => {
-        return successfulRequest().expect(/"username":"ABC"/)
-      })
-      it('returns parse ID', () => {
-        return successfulRequest().expect(/"_id":"zzz"/)
-      })
-      it('returns created at', () => {
-        return successfulRequest().expect(/"createdAt":"1970-/)
-      })
-    })
 
-    it('returns 401 if user not found', () => {
-      return request(app)
-        .post('/legacyusers/check')
-        .type('form').send({ usernameOrEmail: 'ABCX', password: 'meow', apiKey: API_KEY })
-        .expect(401)
-    })
+      it('can authenticate using email', () => {
+        return request(app)
+          .post('/legacyusers/check')
+          .type('form').send({ usernameOrEmail: 'abc@test.test', password: 'meow', apiKey: API_KEY })
+          .expect(200)
+      })
 
-    it('returns 401 if user password incorrect', () => {
-      return request(app)
-        .post('/legacyusers/check')
-        .type('form').send({ usernameOrEmail: 'ABC', password: 'meoww', apiKey: API_KEY })
-        .expect(401)
-    })
+      describe('a successful request', () => {
+        function successfulRequest () {
+          return request(app)
+            .post('/legacyusers/check')
+            .type('form').send({ usernameOrEmail: 'ABC', password: 'meow', apiKey: API_KEY })
+            .expect(200)
+        }
+        it('returns email', () => {
+          return successfulRequest().expect(/"email":"abc@test.test"/)
+        })
+        it('returns username', () => {
+          return successfulRequest().expect(/"username":"ABC"/)
+        })
+        it('returns parse ID', () => {
+          return successfulRequest().expect(/"_id":"zzz"/)
+        })
+        it('returns created at', () => {
+          return successfulRequest().expect(/"createdAt":"1970-/)
+        })
+      })
 
-    it('returns 400 if bad api key', () => {
-      return request(app)
-        .post('/legacyusers/check')
-        .type('form').send({ usernameOrEmail: 'ABC', password: 'meow', apiKey: 'bad' })
-        .expect(400)
+      it('returns 401 if user not found', () => {
+        return request(app)
+          .post('/legacyusers/check')
+          .type('form').send({ usernameOrEmail: 'ABCX', password: 'meow', apiKey: API_KEY })
+          .expect(401)
+      })
+
+      it('returns 401 if user password incorrect', () => {
+        return request(app)
+          .post('/legacyusers/check')
+          .type('form').send({ usernameOrEmail: 'ABC', password: 'meoww', apiKey: API_KEY })
+          .expect(401)
+      })
+
+      it('returns 400 if bad api key', () => {
+        return request(app)
+          .post('/legacyusers/check')
+          .type('form').send({ usernameOrEmail: 'ABC', password: 'meow', apiKey: 'bad' })
+          .expect(400)
+      })
     })
   })
 })
