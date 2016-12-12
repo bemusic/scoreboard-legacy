@@ -44,6 +44,7 @@ function createLegacyUserApi (apiKey, legacyUserRepository) {
   })
 
   router.post('/check', function (req, res, next) {
+    // TODO: playerIdOrEmail
     const usernameOrEmail = String(req.body.usernameOrEmail)
     const password = String(req.body.password)
     Promise.resolve(authenticate(usernameOrEmail, password))
@@ -59,7 +60,7 @@ function createLegacyUserApi (apiKey, legacyUserRepository) {
 
   router.post('/get', function (req, res, next) {
     const email = String(req.body.email)
-    Promise.resolve(legacyUserRepository.findUser(email))
+    Promise.resolve(legacyUserRepository.findByEmail(email))
     .then((user) => {
       if (!user) {
         res.status(404).json({ error: 'Not found' })
@@ -82,8 +83,8 @@ function createLegacyUserApi (apiKey, legacyUserRepository) {
     }
   }
 
-  function authenticate (usernameOrEmail, password) {
-    return Promise.resolve(legacyUserRepository.findUser(usernameOrEmail))
+  function authenticate (playerIdOrEmail, password) {
+    return Promise.resolve(legacyUserRepository.findByEmail(playerIdOrEmail))
     .then((user) => {
       if (!user) return false
       return bcrypt.compare(password, user.hashedPassword).then((result) =>
