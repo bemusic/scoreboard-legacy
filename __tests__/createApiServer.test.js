@@ -54,18 +54,7 @@ describe('The API server', () => {
             .type('form').send({ usernameOrEmail: 'ABC', password: 'meow', apiKey: API_KEY })
             .expect(200)
         }
-        it('returns email', () => {
-          return successfulRequest().expect(/"email":"abc@test.test"/)
-        })
-        it('returns username', () => {
-          return successfulRequest().expect(/"username":"ABC"/)
-        })
-        it('returns parse ID', () => {
-          return successfulRequest().expect(/"_id":"zzz"/)
-        })
-        it('returns created at', () => {
-          return successfulRequest().expect(/"createdAt":"1970-/)
-        })
+        itContainsUserData(successfulRequest)
       })
 
       it('returns 401 if user not found', () => {
@@ -112,18 +101,7 @@ describe('The API server', () => {
             .type('form').send({ usernameOrEmail: 'ABC', apiKey: API_KEY })
             .expect(200)
         }
-        it('returns email', () => {
-          return successfulRequest().expect(/"email":"abc@test.test"/)
-        })
-        it('returns username', () => {
-          return successfulRequest().expect(/"username":"ABC"/)
-        })
-        it('returns parse ID', () => {
-          return successfulRequest().expect(/"_id":"zzz"/)
-        })
-        it('returns created at', () => {
-          return successfulRequest().expect(/"createdAt":"1970-/)
-        })
+        itContainsUserData(successfulRequest)
       })
 
       it('returns 404 if user not found', () => {
@@ -140,5 +118,20 @@ describe('The API server', () => {
           .expect(400)
       })
     })
+
+    function itContainsUserData (successfulRequest) {
+      it('returns email', () => {
+        return successfulRequest().expect(/"email":"abc@test.test"/)
+      })
+      it('returns username', () => {
+        return successfulRequest().expect(/"username":"ABC"/)
+      })
+      it('returns parse ID', () => {
+        return successfulRequest().expect(/"_id":"zzz"/)
+      })
+      it('returns created at', () => {
+        return successfulRequest().expect(/"createdAt":"1970-/)
+      })
+    }
   })
 })
