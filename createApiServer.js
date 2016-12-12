@@ -52,6 +52,7 @@ function createLegacyUserApi (apiKey, legacyUserRepository) {
         return
       }
       res.json({
+        _id: user._id,
         username: user.username,
         email: user.email,
         emailVerified: user.emailVerified

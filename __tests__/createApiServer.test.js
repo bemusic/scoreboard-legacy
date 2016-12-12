@@ -7,6 +7,7 @@ describe('The API server', () => {
   describe('legacy users', () => {
     const API_KEY = '__dummy_api_key__'
     const DUMMY_USER = {
+      _id: 'zzz',
       username: 'ABC',
       email: 'abc@test.test',
       hashedPassword: '$2a$08$slf.HjrpyEjFgg/HvVW0FuWzCoRNI8eW0Ei4PM.5o6ImHt7lA/Xze'
@@ -35,7 +36,6 @@ describe('The API server', () => {
         .post('/legacyusers/check')
         .type('form').send({ usernameOrEmail: 'ABC', password: 'meow', apiKey: API_KEY })
         .expect(200)
-        .expect(/"email":"abc@test.test"/)
     })
 
     it('can authenticate using email', () => {
@@ -43,7 +43,24 @@ describe('The API server', () => {
         .post('/legacyusers/check')
         .type('form').send({ usernameOrEmail: 'abc@test.test', password: 'meow', apiKey: API_KEY })
         .expect(200)
-        .expect(/"username":"ABC"/)
+    })
+
+    describe('a successful request', () => {
+      function successfulRequest () {
+        return request(app)
+          .post('/legacyusers/check')
+          .type('form').send({ usernameOrEmail: 'ABC', password: 'meow', apiKey: API_KEY })
+          .expect(200)
+      }
+      it('returns email', () => {
+        return successfulRequest().expect(/"email":"abc@test.test"/)
+      })
+      it('returns username', () => {
+        return successfulRequest().expect(/"username":"ABC"/)
+      })
+      it('returns parse ID', () => {
+        return successfulRequest().expect(/"_id":"zzz"/)
+      })
     })
 
     it('returns 401 if user not found', () => {
