@@ -89,5 +89,56 @@ describe('The API server', () => {
           .expect(400)
       })
     })
+
+    xdescribe('get user', () => {
+      it('can get using username', () => {
+        return request(app)
+          .post('/legacyusers/get')
+          .type('form').send({ usernameOrEmail: 'ABC', apiKey: API_KEY })
+          .expect(200)
+      })
+
+      it('can get using email', () => {
+        return request(app)
+          .post('/legacyusers/get')
+          .type('form').send({ usernameOrEmail: 'abc@test.test', apiKey: API_KEY })
+          .expect(200)
+      })
+
+      describe('a successful request', () => {
+        function successfulRequest () {
+          return request(app)
+            .post('/legacyusers/get')
+            .type('form').send({ usernameOrEmail: 'ABC', apiKey: API_KEY })
+            .expect(200)
+        }
+        it('returns email', () => {
+          return successfulRequest().expect(/"email":"abc@test.test"/)
+        })
+        it('returns username', () => {
+          return successfulRequest().expect(/"username":"ABC"/)
+        })
+        it('returns parse ID', () => {
+          return successfulRequest().expect(/"_id":"zzz"/)
+        })
+        it('returns created at', () => {
+          return successfulRequest().expect(/"createdAt":"1970-/)
+        })
+      })
+
+      it('returns 404 if user not found', () => {
+        return request(app)
+          .post('/legacyusers/get')
+          .type('form').send({ usernameOrEmail: 'ABCX', apiKey: API_KEY })
+          .expect(404)
+      })
+
+      it('returns 400 if bad api key', () => {
+        return request(app)
+          .post('/legacyusers/get')
+          .type('form').send({ usernameOrEmail: 'ABC', apiKey: 'bad' })
+          .expect(400)
+      })
+    })
   })
 })
