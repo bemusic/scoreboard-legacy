@@ -13,11 +13,23 @@ describe('The API server', () => {
       createdAt: new Date(0),
       hashedPassword: '$2a$08$slf.HjrpyEjFgg/HvVW0FuWzCoRNI8eW0Ei4PM.5o6ImHt7lA/Xze'
     }
+    const DUMMY_PLAYER = {
+      _id: 'playerZ',
+      playerName: 'ABC'
+    }
     let app
 
     beforeAll(() => {
       app = createApiServer({
         legacyUserApiKey: API_KEY,
+        playerRepository: {
+          findByName (playerName) {
+            if (playerName === DUMMY_PLAYER.playerName) {
+              return Promise.resolve(DUMMY_PLAYER)
+            }
+            return Promise.resolve(null)
+          }
+        },
         legacyUserRepository: {
           findUser (usernameOrEmail) {
             if (usernameOrEmail === DUMMY_USER.username) {
@@ -33,10 +45,10 @@ describe('The API server', () => {
     })
 
     describe('authentication', () => {
-      it('can authenticate using username', () => {
+      xit('can authenticate using player ID', () => {
         return request(app)
           .post('/legacyusers/check')
-          .type('form').send({ usernameOrEmail: 'ABC', password: 'meow', apiKey: API_KEY })
+          .type('form').send({ usernameOrEmail: 'playerZ', password: 'meow', apiKey: API_KEY })
           .expect(200)
       })
 
@@ -51,7 +63,7 @@ describe('The API server', () => {
         function successfulRequest () {
           return request(app)
             .post('/legacyusers/check')
-            .type('form').send({ usernameOrEmail: 'ABC', password: 'meow', apiKey: API_KEY })
+            .type('form').send({ usernameOrEmail: 'abc@test.test', password: 'meow', apiKey: API_KEY })
             .expect(200)
         }
         itContainsUserData(successfulRequest)
@@ -67,30 +79,23 @@ describe('The API server', () => {
       it('returns 401 if user password incorrect', () => {
         return request(app)
           .post('/legacyusers/check')
-          .type('form').send({ usernameOrEmail: 'ABC', password: 'meoww', apiKey: API_KEY })
+          .type('form').send({ usernameOrEmail: 'abc@test.test', password: 'meoww', apiKey: API_KEY })
           .expect(401)
       })
 
       it('returns 400 if bad api key', () => {
         return request(app)
           .post('/legacyusers/check')
-          .type('form').send({ usernameOrEmail: 'ABC', password: 'meow', apiKey: 'bad' })
+          .type('form').send({ usernameOrEmail: 'abc@test.test', password: 'meow', apiKey: 'bad' })
           .expect(400)
       })
     })
 
-    describe('get user', () => {
-      it('can get using username', () => {
-        return request(app)
-          .post('/legacyusers/get')
-          .type('form').send({ usernameOrEmail: 'ABC', apiKey: API_KEY })
-          .expect(200)
-      })
-
+    xdescribe('get user', () => {
       it('can get using email', () => {
         return request(app)
           .post('/legacyusers/get')
-          .type('form').send({ usernameOrEmail: 'abc@test.test', apiKey: API_KEY })
+          .type('form').send({ email: 'abc@test.test', apiKey: API_KEY })
           .expect(200)
       })
 
@@ -98,7 +103,7 @@ describe('The API server', () => {
         function successfulRequest () {
           return request(app)
             .post('/legacyusers/get')
-            .type('form').send({ usernameOrEmail: 'ABC', apiKey: API_KEY })
+            .type('form').send({ email: 'abc@test.test', apiKey: API_KEY })
             .expect(200)
         }
         itContainsUserData(successfulRequest)
@@ -107,14 +112,14 @@ describe('The API server', () => {
       it('returns 404 if user not found', () => {
         return request(app)
           .post('/legacyusers/get')
-          .type('form').send({ usernameOrEmail: 'ABCX', apiKey: API_KEY })
+          .type('form').send({ email: 'xyz@test.test', apiKey: API_KEY })
           .expect(404)
       })
 
       it('returns 400 if bad api key', () => {
         return request(app)
           .post('/legacyusers/get')
-          .type('form').send({ usernameOrEmail: 'ABC', apiKey: 'bad' })
+          .type('form').send({ email: 'abc@test.test', apiKey: 'bad' })
           .expect(400)
       })
     })
