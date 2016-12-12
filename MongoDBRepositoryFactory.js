@@ -18,18 +18,36 @@ function MongoDBRepositoryFactory ({ db }) {
     },
     createLegacyUserRepository () {
       return {
-        findUser (usernameOrEmail) {
+        findByEmail (email) {
           return (db
             .collection('LegacyUser')
-            .find({
-              $or: [
-                { email: usernameOrEmail },
-                { username: usernameOrEmail }
-              ]
-            })
+            .find({ email: email })
             .limit(1)
             .toArray()
             .then((result) => result[0])
+          )
+        },
+        findByUsername (username) {
+          return (db
+            .collection('LegacyUser')
+            .find({ username: username })
+            .limit(1)
+            .toArray()
+            .then((result) => result[0])
+          )
+        }
+      }
+    },
+    createPlayerRepository () {
+      return {
+        findByName (playerName) {
+          return (db
+            .collection('Player')
+            .find({ playerName: playerName }, { _id: 1 })
+            .limit(1)
+            .toArray()
+            .then((result) => result[0])
+            .then((player) => player && player._id || null)
           )
         }
       }

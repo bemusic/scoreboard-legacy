@@ -10,6 +10,7 @@ const schema = require('./schema')
 function createApiServer ({
   logger,
   rankingEntryRepository,
+  playerRepository,
   legacyUserApiKey,
   legacyUserRepository
 } = { }) {
@@ -21,7 +22,11 @@ function createApiServer ({
   }
 
   // Legacy user
-  app.use('/legacyusers', createLegacyUserApi(legacyUserApiKey, legacyUserRepository))
+  app.use('/legacyusers', createLegacyUserApi({
+    legacyUserApiKey,
+    legacyUserRepository,
+    playerRepository
+  }))
 
   // GraphQL
   if (rankingEntryRepository) {
@@ -32,7 +37,11 @@ function createApiServer ({
   return app
 }
 
-function createLegacyUserApi (apiKey, legacyUserRepository) {
+function createLegacyUserApi ({
+  legacyUserApiKey: apiKey,
+  legacyUserRepository,
+  playerRepository
+}) {
   const router = express.Router()
   router.use(require('body-parser').urlencoded({ extended: false }))
   router.use(function (req, res, next) {
@@ -44,9 +53,9 @@ function createLegacyUserApi (apiKey, legacyUserRepository) {
   })
 
   router.post('/check', function (req, res, next) {
-    const usernameOrEmail = String(req.body.usernameOrEmail)
+    const playerIdOrEmail = String(req.body.playerIdOrEmail)
     const password = String(req.body.password)
-    Promise.resolve(authenticate(usernameOrEmail, password))
+    Promise.resolve(authenticate(playerIdOrEmail, password))
     .then((user) => {
       if (!user) {
         res.status(401).json({ error: 'Unauthenticated' })
@@ -58,8 +67,8 @@ function createLegacyUserApi (apiKey, legacyUserRepository) {
   })
 
   router.post('/get', function (req, res, next) {
-    const usernameOrEmail = String(req.body.usernameOrEmail)
-    Promise.resolve(legacyUserRepository.findUser(usernameOrEmail))
+    const email = String(req.body.email)
+    Promise.resolve(legacyUserRepository.findByEmail(email))
     .then((user) => {
       if (!user) {
         res.status(404).json({ error: 'Not found' })
@@ -82,8 +91,13 @@ function createLegacyUserApi (apiKey, legacyUserRepository) {
     }
   }
 
-  function authenticate (usernameOrEmail, password) {
-    return Promise.resolve(legacyUserRepository.findUser(usernameOrEmail))
+  function authenticate (playerIdOrEmail, password) {
+    return Promise.resolve(legacyUserRepository.findByEmail(playerIdOrEmail))
+    .then((user) => user ||
+      playerRepository.findById(playerIdOrEmail).then((player) => player &&
+        legacyUserRepository.findByUsername(player.playerName)
+      )
+    )
     .then((user) => {
       if (!user) return false
       return bcrypt.compare(password, user.hashedPassword).then((result) =>
