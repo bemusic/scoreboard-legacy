@@ -128,7 +128,7 @@ describe('The API server', () => {
       it('returns username', () => {
         return successfulRequest().expect(/"username":"ABC"/)
       })
-      xit('returns player Id', () => {
+      it('returns player Id', () => {
         return successfulRequest().expect(/"playerId":"playerZ"/)
       })
       it('returns parse ID', () => {
