@@ -25,6 +25,9 @@ describe('The API server', () => {
         playerRepository: {
           findByName: (playerName) => Promise.resolve(
             playerName === DUMMY_PLAYER.playerName ? DUMMY_PLAYER : null
+          ),
+          findById: (playerId) => Promise.resolve(
+            playerId === DUMMY_PLAYER._id ? DUMMY_PLAYER : null
           )
         },
         legacyUserRepository: {
@@ -39,17 +42,17 @@ describe('The API server', () => {
     })
 
     describe('authentication', () => {
-      xit('can authenticate using player ID', () => {
+      it('can authenticate using player ID', () => {
         return request(app)
           .post('/legacyusers/check')
-          .type('form').send({ usernameOrEmail: 'playerZ', password: 'meow', apiKey: API_KEY })
+          .type('form').send({ playerIdOrEmail: 'playerZ', password: 'meow', apiKey: API_KEY })
           .expect(200)
       })
 
       it('can authenticate using email', () => {
         return request(app)
           .post('/legacyusers/check')
-          .type('form').send({ usernameOrEmail: 'abc@test.test', password: 'meow', apiKey: API_KEY })
+          .type('form').send({ playerIdOrEmail: 'abc@test.test', password: 'meow', apiKey: API_KEY })
           .expect(200)
       })
 
@@ -57,7 +60,7 @@ describe('The API server', () => {
         function successfulRequest () {
           return request(app)
             .post('/legacyusers/check')
-            .type('form').send({ usernameOrEmail: 'abc@test.test', password: 'meow', apiKey: API_KEY })
+            .type('form').send({ playerIdOrEmail: 'abc@test.test', password: 'meow', apiKey: API_KEY })
             .expect(200)
         }
         itContainsUserData(successfulRequest)
@@ -66,21 +69,21 @@ describe('The API server', () => {
       it('returns 401 if user not found', () => {
         return request(app)
           .post('/legacyusers/check')
-          .type('form').send({ usernameOrEmail: 'ABCX', password: 'meow', apiKey: API_KEY })
+          .type('form').send({ playerIdOrEmail: 'ABCX', password: 'meow', apiKey: API_KEY })
           .expect(401)
       })
 
       it('returns 401 if user password incorrect', () => {
         return request(app)
           .post('/legacyusers/check')
-          .type('form').send({ usernameOrEmail: 'abc@test.test', password: 'meoww', apiKey: API_KEY })
+          .type('form').send({ playerIdOrEmail: 'abc@test.test', password: 'meoww', apiKey: API_KEY })
           .expect(401)
       })
 
       it('returns 400 if bad api key', () => {
         return request(app)
           .post('/legacyusers/check')
-          .type('form').send({ usernameOrEmail: 'abc@test.test', password: 'meow', apiKey: 'bad' })
+          .type('form').send({ playerIdOrEmail: 'abc@test.test', password: 'meow', apiKey: 'bad' })
           .expect(400)
       })
     })
