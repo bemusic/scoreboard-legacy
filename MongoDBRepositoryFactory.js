@@ -28,6 +28,8 @@ function MongoDBRepositoryFactory ({ db }) {
               ]
             })
             .limit(1)
+            .toArray()
+            .then((result) => result[0])
           )
         }
       }
