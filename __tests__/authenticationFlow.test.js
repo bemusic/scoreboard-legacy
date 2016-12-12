@@ -51,9 +51,10 @@ describe('Bemuse authentication flow...', () => {
       env.signUp('DJTHAI', 'thai@bemuse.ninja', 'strongpassword').mustFail()
       return env.verify()
     })
-    xit('cannot sign up if email already exist as legacy user', () => {
+    it('cannot sign up if email already exist as legacy user', () => {
       const env = createEnv()
       env.givenLegacyUser('THAI', 'thai@bemuse.ninja', 'wow')
+      env.givenPlayer('THAI')
       env.signUp('DJTHAI', 'thai@bemuse.ninja', 'strongpassword').mustFail()
       return env.verify()
     })
@@ -61,7 +62,13 @@ describe('Bemuse authentication flow...', () => {
 
   describe('edge cases', () => {
     describe('hijacking user by creating account with existing player id as username', () => {
-      it('should be prevented')
+      it('should be prevented', () => {
+        const env = createEnv()
+        env.givenLegacyUser('THAI', 'thai@bemuse.ninja', 'wow')
+        env.givenPlayer('THAI')
+        env.externalSignUp('player0', 'player0@bemuse.ninja', 'strongpassword').mustFail()
+        return env.verify()
+      })
     })
   })
 
@@ -84,25 +91,32 @@ describe('Bemuse authentication flow...', () => {
       let nextUserId = 0
       return {
         login (username, password) {
-          const user = userByEmail[username] || userByUsername[username] || (() => {
-            // Try to register using our custom script.
-            console.log('Trigger database login', username)
-            const result = databaseLogIn(username, password)
-            if (result) {
-              const newUser = { username, email: result.email, password }
-              register(newUser)
-              return newUser
-            }
-          })()
-          if (!user) {
-            return Promise.resolve({ error: 'no user' })
-          }
-          if (user.password !== password) {
-            return Promise.resolve({ error: 'wrong password' })
-          }
-          return Promise.resolve({
-            idToken: { validToken: true, userId: user._id, email: user.email }
-          })
+          return Promise.resolve((() => {
+            const user = userByEmail[username] || userByUsername[username] || (() => {
+              // Try to register using our custom script.
+              const result = databaseLogIn(username, password)
+              if (result) {
+                const newUser = { username, email: result.email, password }
+                register(newUser)
+                return newUser
+              }
+            })()
+            if (!user) return { error: 'no user' }
+            if (user.password !== password) return { error: 'wrong password' }
+            const idToken = { validToken: true, userId: user._id, email: user.email }
+            return { idToken: idToken }
+          })())
+        },
+        signUp (username, email, password) {
+          return Promise.resolve((() => {
+            if (userByUsername[username]) return { error: 'username duplicate' }
+            if (userByEmail[username]) return { error: 'email duplicate' }
+            if (databaseGetUser(email)) return { error: 'database user conflict email' }
+            if (databaseGetUser(username)) return { error: 'database user conflict name' }
+            const user = { username, email, password }
+            register(user)
+            return { userId: user._id }
+          })())
         }
       }
 
@@ -112,10 +126,9 @@ describe('Bemuse authentication flow...', () => {
         userByEmail[user.email] = user
       }
 
-      // Our custom that we host at Auth0
+      // Our custom code that we host at Auth0
       function databaseLogIn (username, password) {
         const user = legacyUserByEmail[username] || (() => {
-          console.log('Custom DB: Looking for player with ID', username)
           const player = playerById[username]
           return player && legacyUserByUsername[player.playerName]
         })()
@@ -124,7 +137,23 @@ describe('Bemuse authentication flow...', () => {
         }
         return null
       }
+
+      function databaseGetUser (username) {
+        const user = legacyUserByEmail[username] || (() => {
+          const player = playerById[username]
+          return player && legacyUserByUsername[player.playerName]
+        })()
+        return user
+      }
     })()
+
+    function registerPlayer (playerName) {
+      const _id = 'player' + (nextPlayerId++)
+      const player = { playerName, _id }
+      playerByPlayerName[playerName] = player
+      playerById[_id] = player
+      return player
+    }
 
     return {
       givenLegacyUser (username, email, password) {
@@ -133,15 +162,25 @@ describe('Bemuse authentication flow...', () => {
         legacyUserByEmail[email] = user
       },
       givenPlayer (playerName) {
-        const _id = 'player' + (nextPlayerId++)
-        const player = { playerName, _id }
-        playerByPlayerName[playerName] = player
-        playerById[_id] = player
+        registerPlayer(playerName)
       },
       verify () {
         return Promise.coroutine(function * () {
           for (const action of actions) yield Promise.resolve(action())
         })()
+      },
+      externalSignUp (username, email, password) {
+        let result
+        queue(() => externalProvider.signUp(username, email, password)
+          .then((_result) => { result = _result })
+        )
+        return {
+          mustFail () {
+            queue(() => {
+              expect(result.error).toBeTruthy()
+            })
+          }
+        }
       },
       signUp (username, email, password) {
         let result
@@ -156,6 +195,13 @@ describe('Bemuse authentication flow...', () => {
                 if (!player) return Promise.resolve(true)
                 if (player.linked) return Promise.resolve(false)
                 return Promise.resolve(true)
+              },
+              userSignUp (username, email, password) {
+                return externalProvider.signUp(username, email, password)
+              },
+              reservePlayerId (playerName) {
+                const player = playerByPlayerName[playerName] || registerPlayer(playerName)
+                return Promise.resolve(player._id)
               }
             }
           )

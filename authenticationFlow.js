@@ -43,8 +43,10 @@ function * loginByUsernamePassword (username, password, {
 }
 
 exports.signUp =
-function * loginByUsernamePassword (username, email, password, {
+function * signUp (username, email, password, {
   log = (message) => console.log('[loginByUsernamePassword]', message),
+  userSignUp,
+  reservePlayerId,
   checkPlayerNameAvailability
 }) {
   log('Checking player name availability...')
@@ -53,4 +55,15 @@ function * loginByUsernamePassword (username, email, password, {
   if (!available) {
     return { error: 'Player name already taken.' }
   }
+
+  log('Registering player name...')
+  const playerId = yield reservePlayerId(username)
+
+  log('Creating account...')
+  const result = yield userSignUp(playerId, email, password)
+  if (!result.userId) {
+    return { error: 'Cannot sign up: ' + result.error }
+  }
+
+  return { userId: result.userId }
 }
