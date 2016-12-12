@@ -23,23 +23,17 @@ describe('The API server', () => {
       app = createApiServer({
         legacyUserApiKey: API_KEY,
         playerRepository: {
-          findByName (playerName) {
-            if (playerName === DUMMY_PLAYER.playerName) {
-              return Promise.resolve(DUMMY_PLAYER)
-            }
-            return Promise.resolve(null)
-          }
+          findByName: (playerName) => Promise.resolve(
+            playerName === DUMMY_PLAYER.playerName ? DUMMY_PLAYER : null
+          )
         },
         legacyUserRepository: {
-          findUser (usernameOrEmail) {
-            if (usernameOrEmail === DUMMY_USER.username) {
-              return Promise.resolve(DUMMY_USER)
-            }
-            if (usernameOrEmail === DUMMY_USER.email) {
-              return Promise.resolve(DUMMY_USER)
-            }
-            return Promise.resolve(null)
-          }
+          findByEmail: (email) => Promise.resolve(
+            email === DUMMY_USER.email ? DUMMY_USER : null
+          ),
+          findByUsername: (username) => Promise.resolve(
+            username === DUMMY_USER.username ? DUMMY_USER : null
+          )
         }
       })
     })
@@ -91,7 +85,7 @@ describe('The API server', () => {
       })
     })
 
-    xdescribe('get user', () => {
+    describe('get user', () => {
       it('can get using email', () => {
         return request(app)
           .post('/legacyusers/get')

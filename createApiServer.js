@@ -58,8 +58,8 @@ function createLegacyUserApi (apiKey, legacyUserRepository) {
   })
 
   router.post('/get', function (req, res, next) {
-    const usernameOrEmail = String(req.body.usernameOrEmail)
-    Promise.resolve(legacyUserRepository.findUser(usernameOrEmail))
+    const email = String(req.body.email)
+    Promise.resolve(legacyUserRepository.findUser(email))
     .then((user) => {
       if (!user) {
         res.status(404).json({ error: 'Not found' })
