@@ -4,34 +4,30 @@ const authenticationFlow = require('../authenticationFlow')
 
 describe('Bemuse authentication flow...', () => {
   describe('legacy user', () => {
-    it('can authenticate with username and password', () => {
+    function createEnvWithLegacyUser () {
       const env = createEnv()
       env.givenLegacyUser('flicknote', 'flicknote@bemuse.ninja', 'pwd')
       env.givenPlayer('flicknote')
+      return env
+    }
+    it('can authenticate with username and password', () => {
+      const env = createEnvWithLegacyUser()
       return env.loginByUsernamePassword('flicknote', 'pwd').mustSucceed()
     })
     it('can authenticate with email and password', () => {
-      const env = createEnv()
-      env.givenLegacyUser('flicknote', 'flicknote@bemuse.ninja', 'pwd')
-      env.givenPlayer('flicknote')
+      const env = createEnvWithLegacyUser()
       return env.loginByUsernamePassword('flicknote@bemuse.ninja', 'pwd').mustSucceed()
     })
     it('cannot authenticate with email if password is wrong', () => {
-      const env = createEnv()
-      env.givenLegacyUser('flicknote', 'flicknote@bemuse.ninja', 'pwd')
-      env.givenPlayer('flicknote')
+      const env = createEnvWithLegacyUser()
       return env.loginByUsernamePassword('flicknote', 'pwdz').mustFail()
     })
     it('cannot authenticate with username if password is wrong', () => {
-      const env = createEnv()
-      env.givenLegacyUser('flicknote', 'flicknote@bemuse.ninja', 'pwd')
-      env.givenPlayer('flicknote')
+      const env = createEnvWithLegacyUser()
       return env.loginByUsernamePassword('flicknote@bemuse.ninja', 'pwdz').mustFail()
     })
     it('cannot authenticate if unknown player', () => {
-      const env = createEnv()
-      env.givenLegacyUser('flicknote', 'flicknote@bemuse.ninja', 'pwd')
-      env.givenPlayer('flicknote')
+      const env = createEnvWithLegacyUser()
       return env.loginByUsernamePassword('meow', 'pwd').mustFail()
     })
   })
