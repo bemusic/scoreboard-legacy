@@ -55,7 +55,8 @@ function createLegacyUserApi (apiKey, legacyUserRepository) {
         _id: user._id,
         username: user.username,
         email: user.email,
-        emailVerified: user.emailVerified
+        emailVerified: user.emailVerified,
+        createdAt: user.createdAt
       })
     })
     .catch(next)

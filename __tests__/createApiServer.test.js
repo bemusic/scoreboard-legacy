@@ -10,6 +10,7 @@ describe('The API server', () => {
       _id: 'zzz',
       username: 'ABC',
       email: 'abc@test.test',
+      createdAt: new Date(0),
       hashedPassword: '$2a$08$slf.HjrpyEjFgg/HvVW0FuWzCoRNI8eW0Ei4PM.5o6ImHt7lA/Xze'
     }
     let app
@@ -60,6 +61,9 @@ describe('The API server', () => {
       })
       it('returns parse ID', () => {
         return successfulRequest().expect(/"_id":"zzz"/)
+      })
+      it('returns created at', () => {
+        return successfulRequest().expect(/"createdAt":"1970-/)
       })
     })
 
