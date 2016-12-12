@@ -38,7 +38,7 @@ describe('Bemuse authentication flow...', () => {
   })
 
   describe('sign up with username, email and password', () => {
-    xit('can sign up as new user', () => {
+    it('can sign up as new user', () => {
       const env = createEnv()
       env.signUp('DJTHAI', 'thai@bemuse.ninja', 'strongpassword').mustSucceed()
       env.loginByUsernamePassword('DJTHAI', 'strongpassword').mustSucceed()
@@ -107,8 +107,8 @@ describe('Bemuse authentication flow...', () => {
             })()
             if (!user) return { error: 'no user' }
             if (user.password !== password) return { error: 'wrong password' }
-            const idToken = { validToken: true, userId: user._id, email: user.email }
-            return { idToken: idToken }
+            const idToken = generateToken(user)
+            return { idToken }
           })())
         },
         signUp (username, email, password) {
@@ -119,7 +119,8 @@ describe('Bemuse authentication flow...', () => {
             if (databaseGetUser(username)) return { error: 'database user conflict name' }
             const user = { username, email, password }
             register(user)
-            return { userId: user._id }
+            const idToken = generateToken(user)
+            return { userId: user._id, idToken }
           })())
         }
       }
@@ -128,6 +129,10 @@ describe('Bemuse authentication flow...', () => {
         user._id = 'u' + (nextUserId++)
         userByUsername[user.username] = user
         userByEmail[user.email] = user
+      }
+
+      function generateToken (user) {
+        return { validToken: true, userId: user._id, email: user.email }
       }
 
       // Our custom code that we host at Auth0
@@ -191,6 +196,7 @@ describe('Bemuse authentication flow...', () => {
         queue(() => (
           Promise.coroutine(authenticationFlow.signUp)(
             username, email, password, {
+              log: () => { },
               checkPlayerNameAvailability (playerName) {
                 if (legacyUserByUsername[playerName]) {
                   return Promise.resolve(false)

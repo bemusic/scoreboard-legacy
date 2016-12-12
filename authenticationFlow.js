@@ -61,9 +61,9 @@ function * signUp (username, email, password, {
 
   log('Creating account...')
   const result = yield userSignUp(playerId, email, password)
-  if (!result.userId) {
+  if (!result.idToken) {
     return { error: 'Cannot sign up: ' + result.error }
   }
 
-  return { userId: result.userId }
+  return { idToken: result.idToken }
 }
