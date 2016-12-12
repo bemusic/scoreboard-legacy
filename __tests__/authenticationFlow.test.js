@@ -139,6 +139,31 @@ function createEnv () {
     return player
   }
 
+  function action (runAction) {
+    let result
+    return {
+      run () {
+        return runAction()
+        .then(
+          (value) => { result = { value } },
+          (error) => { result = { error } }
+        )
+      },
+      result: {
+        get value () {
+          if (!result) throw new Error('Not run!')
+          if (result.error) throw result.error
+          return result.value
+        },
+        get error () {
+          if (!result) throw new Error('Not run!')
+          if (!result.error) throw new Error('Did not error!')
+          return result.error
+        }
+      }
+    }
+  }
+
   function doSignUp (username, email, password) {
     return Promise.coroutine(authenticationFlow.signUp)(
       username,
@@ -212,55 +237,41 @@ function createEnv () {
       }
     },
     externalSignUp (username, email, password) {
-      let result
-      queue(() => externalProvider.signUp(username, email, password)
-        .then((_result) => { result = _result })
+      const externalSignUpAction = action(() =>
+        externalProvider.signUp(username, email, password)
       )
+      queue(externalSignUpAction.run)
       return {
         mustFail () {
-          queue(() => {
-            expect(result.error).toBeTruthy()
-          })
+          queue(() => expect(externalSignUpAction.result.error).toBeTruthy())
         }
       }
     },
     signUp (username, email, password) {
-      let result
-      queue(() => doSignUp(username, email, password)
-        .then((_result) => { result = _result })
+      const signUpAction = action(() =>
+        doSignUp(username, email, password)
       )
+      queue(signUpAction.run)
       return {
         mustSucceed () {
-          queue(() => {
-            if (!result.idToken) {
-              throw new Error('Error: ' + result.error)
-            }
-          })
+          queue(() => expect(signUpAction.result.value.idToken).toBeTruthy())
         },
         mustFail () {
-          queue(() => {
-            expect(result.error).toBeTruthy()
-          })
+          queue(() => expect(signUpAction.result.error).toBeTruthy())
         }
       }
     },
     loginByUsernamePassword (username, password) {
-      let result
-      queue(() => doLoginByUsernamePassword(username, password)
-        .then((_result) => { result = _result })
+      const loginAction = action(() =>
+        doLoginByUsernamePassword(username, password)
       )
+      queue(loginAction.run)
       return {
         mustSucceed () {
-          queue(() => {
-            if (!result.idToken) {
-              throw new Error('Error: ' + result.error)
-            }
-          })
+          queue(() => expect(loginAction.result.value.idToken).toBeTruthy())
         },
         mustFail () {
-          queue(() => {
-            expect(result.error).toBeTruthy()
-          })
+          queue(() => expect(loginAction.result.error).toBeTruthy())
         }
       }
     }
@@ -287,8 +298,8 @@ function createExternalAuthProvider ({
             return newUser
           }
         })()
-        if (!user) return { error: 'no user' }
-        if (user.password !== password) return { error: 'wrong password' }
+        if (!user) return { noUser: true }
+        if (user.password !== password) return { wrongPassword: true }
         rule(user)
         const idToken = generateToken(user)
         return { idToken }
@@ -296,10 +307,11 @@ function createExternalAuthProvider ({
     },
     signUp (username, email, password) {
       return Promise.resolve((() => {
-        if (userByUsername[username]) return { error: 'username duplicate' }
-        if (userByEmail[username]) return { error: 'email duplicate' }
-        if (databaseGetUser(email)) return { error: 'database user conflict email' }
-        if (databaseGetUser(username)) return { error: 'database user conflict name' }
+        const reject = (message) => Promise.reject(new Error(message))
+        if (userByUsername[username]) return reject('username duplicate')
+        if (userByEmail[username]) return reject('email duplicate')
+        if (databaseGetUser(email)) return reject('database user conflict email')
+        if (databaseGetUser(username)) return reject('database user conflict name')
         const user = { username, email, password }
         register(user)
         rule(user)
