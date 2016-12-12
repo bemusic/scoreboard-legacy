@@ -70,6 +70,10 @@ describe('Bemuse authentication flow...', () => {
         return env.verify()
       })
     })
+    describe('an unlinked account (somehow)', () => {
+      it('should try to link with legacy user via email, if possible')
+      it('should ask for player name and try to register')
+    })
   })
 
   function createEnv () {
