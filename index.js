@@ -7,7 +7,8 @@ const createApiServer = require('./createApiServer')
 function main () {
   return Promise.coroutine(function * () {
     const DEFAULT_MONGO_URL = 'mongodb://127.0.0.1:27017/bemuse'
-    const db = yield connectMongo(process.env.MONGO_URL || DEFAULT_MONGO_URL)
+    const suppliedMongoUrl = process.env.MONGO_URL || process.env.MONGODB_URI
+    const db = yield connectMongo(suppliedMongoUrl || DEFAULT_MONGO_URL)
     const factory = new MongoDBRepositoryFactory({ db })
     const port = +process.env.PORT || 8008
     const app = createApiServer({
