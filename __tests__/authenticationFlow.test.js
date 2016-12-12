@@ -12,23 +12,28 @@ describe('Bemuse authentication flow...', () => {
     }
     it('can authenticate with username and password', () => {
       const env = createEnvWithLegacyUser()
-      return env.loginByUsernamePassword('flicknote', 'pwd').mustSucceed()
+      env.loginByUsernamePassword('flicknote', 'pwd').mustSucceed()
+      return env.verify()
     })
     it('can authenticate with email and password', () => {
       const env = createEnvWithLegacyUser()
-      return env.loginByUsernamePassword('flicknote@bemuse.ninja', 'pwd').mustSucceed()
+      env.loginByUsernamePassword('flicknote@bemuse.ninja', 'pwd').mustSucceed()
+      return env.verify()
     })
     it('cannot authenticate with email if password is wrong', () => {
       const env = createEnvWithLegacyUser()
-      return env.loginByUsernamePassword('flicknote', 'pwdz').mustFail()
+      env.loginByUsernamePassword('flicknote', 'pwdz').mustFail()
+      return env.verify()
     })
     it('cannot authenticate with username if password is wrong', () => {
       const env = createEnvWithLegacyUser()
-      return env.loginByUsernamePassword('flicknote@bemuse.ninja', 'pwdz').mustFail()
+      env.loginByUsernamePassword('flicknote@bemuse.ninja', 'pwdz').mustFail()
+      return env.verify()
     })
     it('cannot authenticate if unknown player', () => {
       const env = createEnvWithLegacyUser()
-      return env.loginByUsernamePassword('meow', 'pwd').mustFail()
+      env.loginByUsernamePassword('meow', 'pwd').mustFail()
+      return env.verify()
     })
   })
 
@@ -37,7 +42,12 @@ describe('Bemuse authentication flow...', () => {
     const legacyUserByEmail = { }
     const playerByPlayerName = { }
     const playerById = { }
+    const actions = [ ]
     let nextPlayerId = 0
+
+    function queue (action) {
+      actions.push(action)
+    }
 
     // This is Auth0.
     const externalProvider = (() => {
@@ -100,6 +110,11 @@ describe('Bemuse authentication flow...', () => {
         playerByPlayerName[playerName] = player
         playerById[_id] = player
       },
+      verify () {
+        return Promise.coroutine(function * () {
+          for (const action of actions) yield action()
+        })()
+      },
       loginByUsernamePassword (username, password) {
         const run = () => (
           Promise.coroutine(authenticationFlow.loginByUsernamePassword)(
@@ -119,16 +134,16 @@ describe('Bemuse authentication flow...', () => {
         )
         return {
           mustSucceed () {
-            return run().then((result) => {
+            queue(() => run().then((result) => {
               if (!result.idToken) {
                 throw new Error('Error: ' + result.error)
               }
-            })
+            }))
           },
           mustFail () {
-            return run().then((result) => {
+            queue(() => run().then((result) => {
               expect(result.error).toBeTruthy()
-            })
+            }))
           }
         }
       }
