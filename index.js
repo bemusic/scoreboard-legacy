@@ -12,12 +12,18 @@ function main () {
     const port = +process.env.PORT || 8008
     const app = createApiServer({
       logger: log4js.getLogger('HTTP'),
-      // TODO legacyUserApiKey
-      // TODO legacyUserRepository
+      legacyUserApiKey: requiredEnv('LEGACY_USER_API_KEY'),
+      legacyUserRepository: factory.createLegacyUserRepository(),
       rankingEntryRepository: factory.createRankingEntryRepository()
     })
     runApiServer(app, port)
   })()
+}
+
+function requiredEnv (key) {
+  const value = process.env[key]
+  if (!value) throw new Error(`Required environment variable: ${key}`)
+  return value
 }
 
 main().catch((e) => setTimeout(() => { throw e }))
