@@ -43,8 +43,8 @@ describe('Bemuse authentication flow...', () => {
     })
   })
 
-  describe('sign up with username, email and password', () => {
-    it('can sign up as new user', () => {
+  describe('a new user', () => {
+    it('can sign up with username, email and password', () => {
       const env = createEnv()
       env.signUp('DJTHAI', 'thai@bemuse.ninja', 'strongpassword').mustSucceed()
       env.loginByUsernamePassword('DJTHAI', 'strongpassword').mustSucceed()
@@ -122,18 +122,22 @@ function createEnv () {
       return user
     },
     rule (user) {
-      if (user.email && !user.playerName) {
-        const player = link(user._id, user.username)
-        user.playerId = player._id
-        user.playerName = player.playerName
-      }
+      // Should update the player name in Auth0!
     }
   })
 
-  function link (userId, playerId) {
-    const player = playerById[playerId]
-    player.linkedTo = userId
-    return player
+  function ensureLink (idToken) {
+    const user = externalProvider.getUserByIdToken(idToken)
+    if (!user.username) {
+      throw new Error('cannot link: user does not have username')
+    }
+    const player = playerById[user.username]
+    if (!player) {
+      throw new Error('no matching player found')
+    }
+    player.linkedTo = user._id
+    const { playerName, _id: playerId } = player
+    return Promise.resolve({ playerName, playerId })
   }
 
   function registerPlayer (playerName) {
@@ -191,7 +195,8 @@ function createEnv () {
         reservePlayerId (playerName) {
           const player = playerByPlayerName[playerName] || registerPlayer(playerName)
           return Promise.resolve(player._id)
-        }
+        },
+        ensureLink
       }
     )
   }
@@ -211,7 +216,8 @@ function createEnv () {
             ? { playerId: result._id }
             : { error: 'no found' }
           )
-        }
+        },
+        ensureLink
       }
     )
   }
@@ -290,6 +296,7 @@ function createExternalAuthProvider ({
 }) {
   const userByUsername = { }
   const userByEmail = { }
+  const userById = { }
   let nextUserId = 0
   return {
     login (username, password) {
@@ -306,7 +313,7 @@ function createExternalAuthProvider ({
         if (!user) return { noUser: true }
         if (user.password !== password) return { wrongPassword: true }
         rule(user)
-        const idToken = generateToken(user)
+        const idToken = generateIdToken(user)
         return { idToken }
       })())
     },
@@ -320,12 +327,16 @@ function createExternalAuthProvider ({
         const user = { username, email, password }
         register(user)
         rule(user)
-        const idToken = generateToken(user)
+        const idToken = generateIdToken(user)
         return { userId: user._id, idToken }
       })())
     },
     getUserByEmail (email) {
       return userByEmail[email]
+    },
+    getUserByIdToken (idToken) {
+      if (!idToken.validIdToken) throw new Error('invalid id token')
+      return userById[idToken.userId]
     }
   }
 
@@ -333,9 +344,10 @@ function createExternalAuthProvider ({
     user._id = 'u' + (nextUserId++)
     userByUsername[user.username] = user
     userByEmail[user.email] = user
+    userById[user._id] = user
   }
 
-  function generateToken (user) {
-    return { validToken: true, userId: user._id, email: user.email }
+  function generateIdToken (user) {
+    return { validIdToken: true, userId: user._id, email: user.email }
   }
 }

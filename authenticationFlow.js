@@ -1,6 +1,8 @@
 
 exports.loginByUsernamePassword =
 function * loginByUsernamePassword (username, password, {
+  log = (message) => console.log('[loginByUsernamePassword]', message),
+
   // (usernameOrEmail, password) => Promise
   // - If result contain `idToken` property => OK.
   // - Otherwise, invalid username or password.
@@ -11,10 +13,14 @@ function * loginByUsernamePassword (username, password, {
   // - Otherwise, player not found.
   resolvePlayerId,
 
-  log = (message) => console.log('[loginByUsernamePassword]', message)
+  // (idToken) => Promise
+  // - Result should contain `playerId` and `playerName` property.
+  ensureLink
 }) {
   {
     const { idToken } = yield * obtainIdToken()
+    log('Loading profile...')
+    yield ensureLink(idToken)
     return { idToken }
   }
 
@@ -26,7 +32,7 @@ function * loginByUsernamePassword (username, password, {
       const { idToken } = yield usernamePasswordLogin(email, password)
       if (idToken) {
         log('Authenticated using email.')
-        return { idToken: idToken }
+        return { idToken }
       }
     }
 
@@ -63,7 +69,11 @@ function * signUp (username, email, password, {
 
   // (playerId) => Promise
   // - Result is a boolean.
-  checkPlayerNameAvailability
+  checkPlayerNameAvailability,
+
+  // (idToken) => Promise
+  // - Result should contain `playerId` and `playerName` property.
+  ensureLink
 }) {
   log('Checking player name availability...')
   const available = yield checkPlayerNameAvailability(username)
@@ -80,5 +90,8 @@ function * signUp (username, email, password, {
   if (!idToken) {
     throw new Error('Cannot sign up (unknown error)')
   }
+
+  log('Linking account...')
+  yield ensureLink(idToken)
   return { idToken }
 }
