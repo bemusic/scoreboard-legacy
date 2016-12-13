@@ -50,7 +50,7 @@ function * loginByUsernamePassword (username, password, {
 
 exports.signUp =
 function * signUp (username, email, password, {
-  log = (message) => console.log('[loginByUsernamePassword]', message),
+  log = (message) => console.log('[signUp]', message),
 
   // (username, email, password) => Promise
   // - Result should always contain `idToken` property.
