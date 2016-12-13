@@ -35,7 +35,12 @@ describe('Bemuse authentication flow...', () => {
       env.loginByUsernamePassword('meow', 'pwd').mustFail()
       return env.verify()
     })
-    it('should link the player after successful')
+    it('should link the player after successful', () => {
+      const env = createEnvWithLegacyUser()
+      env.loginByUsernamePassword('flicknote', 'pwd').mustSucceed()
+      env.playerWithName('flicknote').shouldBeLinkedTo('flicknote@bemuse.ninja')
+      return env.verify()
+    })
   })
 
   describe('sign up with username, email and password', () => {
