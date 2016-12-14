@@ -61,7 +61,10 @@ function createLegacyUserApi ({
         res.status(401).json({ error: 'Unauthenticated' })
         return
       }
-      res.json(formatUser(user))
+      return playerRepository.findByName(user.username)
+      .then((player) => {
+        res.json(formatResult(user, player))
+      })
     })
     .catch(next)
   })
@@ -74,17 +77,21 @@ function createLegacyUserApi ({
         res.status(404).json({ error: 'Not found' })
         return
       }
-      res.json(formatUser(user))
+      return playerRepository.findByName(user.username)
+      .then((player) => {
+        res.json(formatResult(user, player))
+      })
     })
     .catch(next)
   })
 
   return router
 
-  function formatUser (user) {
+  function formatResult (user, player) {
     return {
       _id: user._id,
       username: user.username,
+      playerId: player._id,
       email: user.email,
       emailVerified: user.emailVerified,
       createdAt: user.createdAt
