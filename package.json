@@ -21,8 +21,10 @@
     "uuid": "^3.0.1"
   },
   "devDependencies": {
+    "axios": "^0.15.3",
     "codecov": "^1.0.1",
     "jest": "^17.0.3",
+    "prescript": "^0.120.1",
     "standard": "^8.5.0",
     "supertest": "^2.0.1"
   },

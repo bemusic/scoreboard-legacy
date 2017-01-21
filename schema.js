@@ -1,6 +1,11 @@
 const { buildSchema } = require('graphql')
 
 const schema = buildSchema(`
+  schema {
+    query: Query
+    mutation: Mutation
+  }
+
   # Query stuff from Bemuse internet ranking system here!
   type Query {
     # Query a chart by its MD5.
@@ -8,6 +13,15 @@ const schema = buildSchema(`
 
     # The current player.
     me: Self
+
+    # Queries a player by name
+    player(name: String!): PublicPlayerData
+  }
+
+  # Do stuff
+  type Mutation {
+    # Register a player (or return an existing one)
+    registerPlayer(name: String!): PublicPlayerData
   }
 
   # The current player.
@@ -31,9 +45,6 @@ const schema = buildSchema(`
   type Chart {
     # Query a level by play mode (KB or BM).
     level(playMode: String!): Level
-
-    # Queries a player by name
-    player(name: String!): PublicPlayerData
   }
 
   # A Level is identified by a chart’s hash and its play mode.

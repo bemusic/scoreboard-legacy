@@ -15,7 +15,8 @@ function main () {
       logger: log4js.getLogger('HTTP'),
       legacyUserApiKey: requiredEnv('LEGACY_USER_API_KEY'),
       legacyUserRepository: factory.createLegacyUserRepository(),
-      rankingEntryRepository: factory.createRankingEntryRepository()
+      rankingEntryRepository: factory.createRankingEntryRepository(),
+      playerRepository: factory.createPlayerRepository()
     })
     runApiServer(app, port)
   })()

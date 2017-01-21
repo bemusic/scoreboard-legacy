@@ -32,7 +32,20 @@ function createRoot ({
             })
         })
         .then(player => {
-          return {
+          return player && {
+            id: player._id,
+            name: player.playerName
+          }
+        })
+    },
+    registerPlayer ({ name }) {
+      return playerRepository.findByName(name)
+        .then(player => {
+          return player || playerRepository.register(name)
+            .then(() => playerRepository.findByName(name))
+        })
+        .then(player => {
+          return player && {
             id: player._id,
             name: player.playerName
           }
