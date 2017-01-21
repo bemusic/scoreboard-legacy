@@ -30,7 +30,11 @@ function createApiServer ({
 
   // GraphQL
   if (rankingEntryRepository) {
-    const rootValue = createRoot({ rankingEntryRepository })
+    const rootValue = createRoot({
+      rankingEntryRepository,
+      legacyUserRepository,
+      playerRepository
+    })
     app.use(graphqlHTTP({ schema, rootValue, graphiql: true }))
   }
 

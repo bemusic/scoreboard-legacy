@@ -1,3 +1,5 @@
+const uuid = require('uuid')
+
 module.exports = MongoDBRepositoryFactory
 
 function MongoDBRepositoryFactory ({ db }) {
@@ -39,15 +41,25 @@ function MongoDBRepositoryFactory ({ db }) {
       }
     },
     createPlayerRepository () {
+      const playerCollection = db.collection('Player')
+      playerCollection.createIndex(
+        { playerName: 1 },
+        { unique: true }
+      )
       return {
         findByName (playerName) {
-          return (db
-            .collection('Player')
+          return (playerCollection
             .find({ playerName: playerName }, { _id: 1 })
             .limit(1)
             .toArray()
             .then((result) => result[0])
-            .then((player) => player && player._id || null)
+          )
+        },
+        register (playerName) {
+          const playerId = uuid.v4()
+          return (playerCollection
+            .insertOne({ _id: playerId, playerName: playerName })
+            .then((result) => playerId)
           )
         }
       }

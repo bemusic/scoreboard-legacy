@@ -1,6 +1,10 @@
 module.exports = createRoot
 
-function createRoot ({ rankingEntryRepository }) {
+function createRoot ({
+  rankingEntryRepository,
+  legacyUserRepository,
+  playerRepository
+}) {
   return {
     chart ({ md5 }) {
       return {
@@ -17,6 +21,22 @@ function createRoot ({ rankingEntryRepository }) {
           }
         }
       }
+    },
+    player ({ name }) {
+      return playerRepository.findByName(name)
+        .then(foundPlayer => {
+          return foundPlayer || legacyUserRepository.findByUsername(name)
+            .then(foundLegacyUser => {
+              return foundLegacyUser && playerRepository.register(name)
+                .then(() => playerRepository.findByName(name))
+            })
+        })
+        .then(player => {
+          return {
+            id: player._id,
+            name: player.playerName
+          }
+        })
     },
     me: () => Promise.reject(new Error('Not implemented yet~'))
   }

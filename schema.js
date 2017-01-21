@@ -16,12 +16,24 @@ const schema = buildSchema(`
     records(ids: [String]): [RankingEntry]
   }
 
+  # A publicly-accessible player data
+  type PublicPlayerData {
+    # The player’s name
+    name: String!
+
+    # The player’s ID
+    id: String!
+  }
+
   # A notechart (.bms, .bmson) file, identified by its file hash (MD5).
   # In Bemuse, different play mode is a different Level and thus has a
   # different scoreboard.
   type Chart {
     # Query a level by play mode (KB or BM).
     level(playMode: String!): Level
+
+    # Queries a player by name
+    player(name: String!): PublicPlayerData
   }
 
   # A Level is identified by a chart’s hash and its play mode.
