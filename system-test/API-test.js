@@ -30,8 +30,11 @@ step('Start server', () => asyncAction(function * (state, context) {
 
   const db = state.db
   const factory = new MongoDBRepositoryFactory({ db })
+  const logger = log4js.getLogger('HTTP')
+  logger.setLevel('ERROR')
+
   const app = createApiServer({
-    logger: log4js.getLogger('HTTP'),
+    logger,
     legacyUserApiKey: '{{LEGACY_USER_API_KEY}}',
     legacyUserRepository: factory.createLegacyUserRepository(),
     rankingEntryRepository: factory.createRankingEntryRepository(),
@@ -90,3 +93,7 @@ step('Test player registration', () => {
     })
   }))
 })
+
+step('Quit', () => action(() => {
+  setTimeout(() => process.exit(0), 1000)
+}))
