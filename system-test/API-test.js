@@ -50,7 +50,7 @@ step('Start server', () => asyncAction(function * (state, context) {
   })
 }))
 
-const graphql = (query) => step('GraphQL ' + query, () => asyncAction(function * (state, context) {
+const graphql = (query) => step(`GraphQL \`${query}\``, () => asyncAction(function * (state, context) {
   const client = axios.create({
     baseURL: 'http://localhost:' + state.serverAddress.port
   })
