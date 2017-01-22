@@ -132,11 +132,8 @@ describe('The API server', () => {
       it('returns email', () => {
         return successfulRequest().expect(/"email":"abc@test.test"/)
       })
-      it('returns username', () => {
-        return successfulRequest().expect(/"username":"ABC"/)
-      })
-      it('returns player Id', () => {
-        return successfulRequest().expect(/"playerId":"playerZ"/)
+      it('returns player ID as username', () => {
+        return successfulRequest().expect(/"username":"playerZ"/)
       })
       it('returns parse ID', () => {
         return successfulRequest().expect(/"_id":"zzz"/)
