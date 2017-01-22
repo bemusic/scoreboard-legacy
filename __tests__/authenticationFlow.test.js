@@ -57,6 +57,13 @@ describe('Bemuse authentication flow...', () => {
       env.signUp('DJTHAI', 'thai@bemuse.ninja', 'strongpassword').mustFail()
       return env.verify()
     })
+    it('cannot hijack legacy user by registering a same name with different email', () => {
+      const env = createEnv()
+      env.givenLegacyUser('DJTHAI', 'thai@another.place', 'wow')
+      env.hijackAvailabilityCheck()
+      env.signUp('DJTHAI', 'thai@bemuse.ninja', 'strongpassword').mustFail()
+      return env.verify()
+    })
     it('cannot sign up if email already exist as legacy user', () => {
       const env = createEnv()
       env.givenLegacyUser('THAI', 'thai@bemuse.ninja', 'wow')
@@ -95,6 +102,7 @@ function createEnv () {
   const playerById = { }
   const actions = [ ]
   let nextPlayerId = 0
+  let availabilityCheckHijacked = false
 
   function queue (action) {
     actions.push(action)
@@ -180,6 +188,9 @@ function createEnv () {
       {
         log: () => { },
         checkPlayerNameAvailability (playerName) {
+          if (availabilityCheckHijacked) {
+            return Promise.resolve(true)
+          }
           if (legacyUserByUsername[playerName]) {
             return Promise.resolve(false)
           }
@@ -257,6 +268,9 @@ function createEnv () {
         }
       }
     },
+    hijackAvailabilityCheck () {
+      availabilityCheckHijacked = true
+    },
     signUp (username, email, password) {
       const signUpAction = action(() =>
         doSignUp(username, email, password)
@@ -267,7 +281,9 @@ function createEnv () {
           queue(() => expect(signUpAction.result.value.idToken).toBeTruthy())
         },
         mustFail () {
-          queue(() => expect(signUpAction.result.error).toBeTruthy())
+          queue(() => {
+            expect(signUpAction.result.error).toBeTruthy()
+          })
         }
       }
     },
@@ -322,7 +338,7 @@ function createExternalAuthProvider ({
         if (userByUsername[username]) return reject('username duplicate')
         if (userByEmail[username]) return reject('email duplicate')
         if (databaseGetUser(email)) return reject('database user conflict email')
-        if (databaseGetUser(username)) return reject('database user conflict name')
+        if (databaseGetUser(username)) return reject('database user conflict name: ' + username)
         const user = { username, email, password }
         register(user)
         rule(user)

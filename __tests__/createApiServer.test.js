@@ -92,7 +92,14 @@ describe('The API server', () => {
       it('can get using email', () => {
         return request(app)
           .post('/legacyusers/get')
-          .type('form').send({ email: 'abc@test.test', apiKey: API_KEY })
+          .type('form').send({ playerIdOrEmail: 'abc@test.test', apiKey: API_KEY })
+          .expect(200)
+      })
+
+      it('can get using player ID', () => {
+        return request(app)
+          .post('/legacyusers/get')
+          .type('form').send({ playerIdOrEmail: 'playerZ', apiKey: API_KEY })
           .expect(200)
       })
 
@@ -100,7 +107,7 @@ describe('The API server', () => {
         function successfulRequest () {
           return request(app)
             .post('/legacyusers/get')
-            .type('form').send({ email: 'abc@test.test', apiKey: API_KEY })
+            .type('form').send({ playerIdOrEmail: 'abc@test.test', apiKey: API_KEY })
             .expect(200)
         }
         itContainsUserData(successfulRequest)
@@ -109,14 +116,14 @@ describe('The API server', () => {
       it('returns 404 if user not found', () => {
         return request(app)
           .post('/legacyusers/get')
-          .type('form').send({ email: 'xyz@test.test', apiKey: API_KEY })
+          .type('form').send({ playerIdOrEmail: 'xyz@test.test', apiKey: API_KEY })
           .expect(404)
       })
 
       it('returns 400 if bad api key', () => {
         return request(app)
           .post('/legacyusers/get')
-          .type('form').send({ email: 'abc@test.test', apiKey: 'bad' })
+          .type('form').send({ playerIdOrEmail: 'abc@test.test', apiKey: 'bad' })
           .expect(400)
       })
     })

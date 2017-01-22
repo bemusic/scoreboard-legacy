@@ -74,8 +74,8 @@ function createLegacyUserApi ({
   })
 
   router.post('/get', function (req, res, next) {
-    const email = String(req.body.email)
-    Promise.resolve(legacyUserRepository.findByEmail(email))
+    const playerIdOrEmail = String(req.body.playerIdOrEmail)
+    findLegacyUser(playerIdOrEmail)
     .then((user) => {
       if (!user) {
         res.status(404).json({ error: 'Not found' })
@@ -102,13 +102,17 @@ function createLegacyUserApi ({
     }
   }
 
-  function authenticate (playerIdOrEmail, password) {
+  function findLegacyUser (playerIdOrEmail) {
     return Promise.resolve(legacyUserRepository.findByEmail(playerIdOrEmail))
     .then((user) => user ||
       playerRepository.findById(playerIdOrEmail).then((player) => player &&
         legacyUserRepository.findByUsername(player.playerName)
       )
     )
+  }
+
+  function authenticate (playerIdOrEmail, password) {
+    return findLegacyUser(playerIdOrEmail)
     .then((user) => {
       if (!user) return false
       return bcrypt.compare(password, user.hashedPassword).then((result) =>
