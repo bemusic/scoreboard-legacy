@@ -9,9 +9,9 @@ function MongoDBRepositoryFactory ({ db }) {
         fetchLeaderboardEntries ({ md5, playMode, max }) {
           return (db
             .collection('GameScore')
-            .find({ md5: md5, playMode: playMode })
+            .find({ md5: String(md5), playMode: String(playMode) })
             .sort([ [ 'score', -1 ] ])
-            .limit(Math.max(1, Math.min(max || 50, 50)))
+            .limit(Math.max(1, Math.min(+max || 50, 50)))
             .toArray()
             .then((result) => result.map(toRankingEntry))
           )
@@ -23,7 +23,7 @@ function MongoDBRepositoryFactory ({ db }) {
         findByEmail (email) {
           return (db
             .collection('LegacyUser')
-            .find({ email: email })
+            .find({ email: String(email) })
             .limit(1)
             .toArray()
             .then((result) => result[0])
@@ -32,7 +32,7 @@ function MongoDBRepositoryFactory ({ db }) {
         findByUsername (username) {
           return (db
             .collection('LegacyUser')
-            .find({ username: username })
+            .find({ username: String(username) })
             .limit(1)
             .toArray()
             .then((result) => result[0])
@@ -49,7 +49,15 @@ function MongoDBRepositoryFactory ({ db }) {
       return {
         findByName (playerName) {
           return (playerCollection
-            .find({ playerName: playerName }, { _id: 1 })
+            .find({ playerName: String(playerName) }, { _id: 1 })
+            .limit(1)
+            .toArray()
+            .then((result) => result[0])
+          )
+        },
+        findById (playerId) {
+          return (playerCollection
+            .find({ _id: String(playerId) }, { _id: 1 })
             .limit(1)
             .toArray()
             .then((result) => result[0])
@@ -58,7 +66,7 @@ function MongoDBRepositoryFactory ({ db }) {
         register (playerName) {
           const playerId = uuid.v4()
           return (playerCollection
-            .insertOne({ _id: playerId, playerName: playerName })
+            .insertOne({ _id: playerId, playerName: String(playerName) })
             .then((result) => playerId)
           )
         }
