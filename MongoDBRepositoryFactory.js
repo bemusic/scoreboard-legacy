@@ -49,7 +49,7 @@ function MongoDBRepositoryFactory ({ db }) {
       return {
         findByName (playerName) {
           return (playerCollection
-            .find({ playerName: String(playerName) }, { _id: 1 })
+            .find({ playerName: String(playerName) })
             .limit(1)
             .toArray()
             .then((result) => result[0])
@@ -57,7 +57,7 @@ function MongoDBRepositoryFactory ({ db }) {
         },
         findById (playerId) {
           return (playerCollection
-            .find({ _id: String(playerId) }, { _id: 1 })
+            .find({ _id: String(playerId) })
             .limit(1)
             .toArray()
             .then((result) => result[0])
