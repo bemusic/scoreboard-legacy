@@ -3,6 +3,7 @@ const log4js = require('log4js')
 const express = require('express')
 const graphqlHTTP = require('express-graphql')
 const bcrypt = require('bcrypt')
+const cors = require('cors')
 
 const createRoot = require('./createRoot')
 const schema = require('./schema')
@@ -35,6 +36,7 @@ function createApiServer ({
       legacyUserRepository,
       playerRepository
     })
+    app.use(cors())
     app.use(graphqlHTTP({ schema, rootValue, graphiql: true }))
   }
 
