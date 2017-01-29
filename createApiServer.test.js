@@ -1,6 +1,6 @@
 /* eslint-env jest */
 
-const createApiServer = require('../createApiServer')
+const createApiServer = require('./createApiServer')
 const request = require('supertest')
 
 describe('The API server', () => {
