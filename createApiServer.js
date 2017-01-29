@@ -13,7 +13,8 @@ function createApiServer ({
   rankingEntryRepository,
   playerRepository,
   legacyUserApiKey,
-  legacyUserRepository
+  legacyUserRepository,
+  tokenValidator
 } = { }) {
   const app = express()
 
@@ -34,7 +35,8 @@ function createApiServer ({
     const rootValue = createRoot({
       rankingEntryRepository,
       legacyUserRepository,
-      playerRepository
+      playerRepository,
+      tokenValidator
     })
     app.use(cors())
     app.use(graphqlHTTP({ schema, rootValue, graphiql: true }))

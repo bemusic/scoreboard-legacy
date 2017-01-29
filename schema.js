@@ -22,6 +22,9 @@ const schema = buildSchema(`
   type Mutation {
     # Register a player (or return an existing one)
     registerPlayer(name: String!): PublicPlayerData
+
+    # Link player to an auth account
+    linkPlayer(jwt: String!): PublicPlayerData
   }
 
   # The current player.

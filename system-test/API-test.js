@@ -38,7 +38,18 @@ step('Start server', () => asyncAction(function * (state, context) {
     legacyUserApiKey: '{{LEGACY_USER_API_KEY}}',
     legacyUserRepository: factory.createLegacyUserRepository(),
     rankingEntryRepository: factory.createRankingEntryRepository(),
-    playerRepository: factory.createPlayerRepository()
+    playerRepository: factory.createPlayerRepository(),
+    tokenValidator: {
+      validateToken: (token) => {
+        if (token === 'a') {
+          return Promise.resolve({
+            playerId: state.playerId,
+            userId: 'user|a'
+          })
+        }
+        return Promise.reject(new Error('No known token found?'))
+      }
+    }
   })
   return yield new Promise((resolve, reject) => {
     app.listen(0, function (err) {
@@ -90,6 +101,18 @@ step('Test player registration', () => {
         player: {
           id: state.playerId,
           linked: false
+        }
+      }
+    })
+  }))
+
+  step('Link account', () => graphql(`mutation { linkPlayer(jwt: "a") { id, linked } }`))
+  step('id should be correct', () => action(state => {
+    assert.deepEqual(state.response.data, {
+      data: {
+        linkPlayer: {
+          id: state.playerId,
+          linked: true
         }
       }
     })
