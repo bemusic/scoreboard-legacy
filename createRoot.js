@@ -3,7 +3,8 @@ module.exports = createRoot
 function createRoot ({
   rankingEntryRepository,
   legacyUserRepository,
-  playerRepository
+  playerRepository,
+  tokenValidator
 }) {
   return {
     chart ({ md5 }) {
@@ -32,10 +33,7 @@ function createRoot ({
             })
         })
         .then(player => {
-          return player && {
-            id: player._id,
-            name: player.playerName
-          }
+          return player && PublicPlayerData(player)
         })
     },
     registerPlayer ({ name }) {
@@ -45,13 +43,35 @@ function createRoot ({
             .then(() => playerRepository.findByName(name))
         })
         .then(player => {
-          return player && {
-            id: player._id,
-            name: player.playerName
-          }
+          return player && PublicPlayerData(player)
+        })
+    },
+    linkPlayer ({ jwt }) {
+      return tokenValidator.validateToken(jwt)
+        .then(tokenInfo => {
+          const playerId = tokenInfo.playerId
+          const userId = tokenInfo.userId
+          return playerRepository.findById(playerId).then(player => {
+            if (!player) throw new Error('Player with specified ID not found.')
+            if (player.linkedTo && player.linkedTo !== userId) {
+              throw new Error('Player linked to incorrect ID.')
+            }
+            return playerRepository.saveLink(playerId, userId).then(() => {
+              return playerRepository.findById(playerId)
+                .then(player => PublicPlayerData(player))
+            })
+          })
         })
     },
     me: () => Promise.reject(new Error('Not implemented yet~'))
+  }
+
+  function PublicPlayerData (player) {
+    return {
+      id: player._id,
+      name: player.playerName,
+      linked: !!player.linkedTo
+    }
   }
 }
 

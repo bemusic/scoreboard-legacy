@@ -1,4 +1,4 @@
-const { step, action, pending } = require('prescript')
+const { step, action } = require('prescript')
 const axios = require('axios')
 const Promise = require('bluebird')
 const assert = require('assert')
@@ -38,7 +38,18 @@ step('Start server', () => asyncAction(function * (state, context) {
     legacyUserApiKey: '{{LEGACY_USER_API_KEY}}',
     legacyUserRepository: factory.createLegacyUserRepository(),
     rankingEntryRepository: factory.createRankingEntryRepository(),
-    playerRepository: factory.createPlayerRepository()
+    playerRepository: factory.createPlayerRepository(),
+    tokenValidator: {
+      validateToken: (token) => {
+        if (token === 'a') {
+          return Promise.resolve({
+            playerId: state.playerId,
+            userId: 'user|a'
+          })
+        }
+        return Promise.reject(new Error('No known token found?'))
+      }
+    }
   })
   return yield new Promise((resolve, reject) => {
     app.listen(0, function (err) {
@@ -62,6 +73,7 @@ const graphql = (query) => step(`GraphQL \`${query}\``, () => asyncAction(functi
     context.log('OK', state.response.data)
   } catch (e) {
     context.log('Error', e.response.data)
+    throw e
   }
 }))
 
@@ -82,12 +94,25 @@ step('Test player registration', () => {
     state.playerId = playerId
   }))
 
-  step('Query flicknote', () => graphql(`query { player(name: "flicknote") { id } }`))
+  step('Query flicknote', () => graphql(`query { player(name: "flicknote") { id, linked } }`))
   step('id should be correct', () => action(state => {
     assert.deepEqual(state.response.data, {
       data: {
         player: {
-          id: state.playerId
+          id: state.playerId,
+          linked: false
+        }
+      }
+    })
+  }))
+
+  step('Link account', () => graphql(`mutation { linkPlayer(jwt: "a") { id, linked } }`))
+  step('id should be correct', () => action(state => {
+    assert.deepEqual(state.response.data, {
+      data: {
+        linkPlayer: {
+          id: state.playerId,
+          linked: true
         }
       }
     })

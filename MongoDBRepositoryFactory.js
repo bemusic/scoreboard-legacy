@@ -69,6 +69,15 @@ function MongoDBRepositoryFactory ({ db }) {
             .insertOne({ _id: playerId, playerName: String(playerName) })
             .then((result) => playerId)
           )
+        },
+        saveLink (playerId, userId) {
+          return (playerCollection
+            .updateOne(
+              { _id: String(playerId) },
+              { $set: { linkedTo: String(userId) } }
+            )
+            .then((result) => null)
+          )
         }
       }
     }
