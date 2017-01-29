@@ -32,10 +32,7 @@ function createRoot ({
             })
         })
         .then(player => {
-          return player && {
-            id: player._id,
-            name: player.playerName
-          }
+          return player && PublicPlayerData(player)
         })
     },
     registerPlayer ({ name }) {
@@ -45,13 +42,18 @@ function createRoot ({
             .then(() => playerRepository.findByName(name))
         })
         .then(player => {
-          return player && {
-            id: player._id,
-            name: player.playerName
-          }
+          return player && PublicPlayerData(player)
         })
     },
     me: () => Promise.reject(new Error('Not implemented yet~'))
+  }
+
+  function PublicPlayerData (player) {
+    return {
+      id: player._id,
+      name: player.playerName,
+      linked: false
+    }
   }
 }
 

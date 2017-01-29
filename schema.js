@@ -35,6 +35,9 @@ const schema = buildSchema(`
     # The player’s name
     name: String!
 
+    # Is the player name linked to an auth account
+    linked: Boolean!
+
     # The player’s ID
     id: String!
   }

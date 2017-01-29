@@ -1,4 +1,4 @@
-const { step, action, pending } = require('prescript')
+const { step, action } = require('prescript')
 const axios = require('axios')
 const Promise = require('bluebird')
 const assert = require('assert')
@@ -62,6 +62,7 @@ const graphql = (query) => step(`GraphQL \`${query}\``, () => asyncAction(functi
     context.log('OK', state.response.data)
   } catch (e) {
     context.log('Error', e.response.data)
+    throw e
   }
 }))
 
@@ -82,12 +83,13 @@ step('Test player registration', () => {
     state.playerId = playerId
   }))
 
-  step('Query flicknote', () => graphql(`query { player(name: "flicknote") { id } }`))
+  step('Query flicknote', () => graphql(`query { player(name: "flicknote") { id, linked } }`))
   step('id should be correct', () => action(state => {
     assert.deepEqual(state.response.data, {
       data: {
         player: {
-          id: state.playerId
+          id: state.playerId,
+          linked: false
         }
       }
     })
