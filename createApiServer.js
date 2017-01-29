@@ -5,16 +5,11 @@ const graphqlHTTP = require('express-graphql')
 const cors = require('cors')
 
 const schema = require('./schema')
-const createRoot = require('./createRoot')
-const createLegacyUserApi = require('./createLegacyUserApi')
 
 function createApiServer ({
   logger,
-  rankingEntryRepository,
-  playerRepository,
-  legacyUserApiKey,
-  legacyUserRepository,
-  tokenValidator
+  legacyUserApi,
+  graphqlRoot
 } = { }) {
   const app = express()
 
@@ -24,23 +19,11 @@ function createApiServer ({
   }
 
   // Legacy user
-  app.use('/legacyusers', createLegacyUserApi({
-    legacyUserApiKey,
-    legacyUserRepository,
-    playerRepository
-  }))
+  app.use('/legacyusers', legacyUserApi)
 
   // GraphQL
-  if (rankingEntryRepository) {
-    const rootValue = createRoot({
-      rankingEntryRepository,
-      legacyUserRepository,
-      playerRepository,
-      tokenValidator
-    })
-    app.use(cors())
-    app.use(graphqlHTTP({ schema, rootValue, graphiql: true }))
-  }
+  app.use(cors())
+  app.use(graphqlHTTP({ schema, rootValue: graphqlRoot, graphiql: true }))
 
   return app
 }
