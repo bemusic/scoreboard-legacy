@@ -63,6 +63,16 @@ function createRoot ({
           })
         })
     },
+    registerScore ({ jwt, md5, playMode, input }) {
+      return tokenValidator.validateToken(jwt)
+        .then(tokenInfo => {
+          const userId = tokenInfo.userId
+          return playerRepository.findByUserId(userId).then(player => {
+            if (!player) throw new Error('Player with specified user ID not found.')
+            // TODO save score playerId, input
+          })
+        })
+    },
     me: () => Promise.reject(new Error('Not implemented yet~'))
   }
 

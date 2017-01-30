@@ -42,10 +42,8 @@ function MongoDBRepositoryFactory ({ db }) {
     },
     createPlayerRepository () {
       const playerCollection = db.collection('Player')
-      playerCollection.createIndex(
-        { playerName: 1 },
-        { unique: true }
-      )
+      playerCollection.createIndex({ playerName: 1 }, { unique: true })
+      playerCollection.createIndex({ linkedTo: 1 })
       return {
         findByName (playerName) {
           return (playerCollection
@@ -58,6 +56,14 @@ function MongoDBRepositoryFactory ({ db }) {
         findById (playerId) {
           return (playerCollection
             .find({ _id: String(playerId) })
+            .limit(1)
+            .toArray()
+            .then((result) => result[0])
+          )
+        },
+        findByUserId (userId) {
+          return (playerCollection
+            .find({ linkedTo: String(userId) })
             .limit(1)
             .toArray()
             .then((result) => result[0])
