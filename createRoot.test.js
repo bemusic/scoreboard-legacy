@@ -11,7 +11,7 @@ describe('GraphQL endpoint', () => {
         chart(md5: "song") {
           level(playMode: "BM") {
             leaderboard(max: 20) {
-              entry { playerName, score }
+              entry { player { name }, score }
               rank
             }
           }
@@ -20,22 +20,30 @@ describe('GraphQL endpoint', () => {
       const rankingEntryRepository = {
         fetchLeaderboardEntries ({ md5, playMode, max }) {
           return Promise.resolve([
-            { playerName: 'A', score: 555555, combo: 4000 },
-            { playerName: 'B', score: 400000, combo: 400 },
-            { playerName: 'C', score: 200000, combo: 40 }
+            { playerId: 'A', data: { score: 555555, combo: 4000 } },
+            { playerId: 'B', data: { score: 400000, combo: 400 } },
+            { playerId: 'C', data: { score: 200000, combo: 40 } }
           ])
         }
       }
-      const root = createRoot({ rankingEntryRepository })
+      const playerRepository = {
+        findById (playerId) {
+          return Promise.resolve({ _id: playerId, playerName: playerId })
+        }
+      }
+      const root = createRoot({
+        rankingEntryRepository,
+        playerRepository
+      })
       return graphql(schema, query, root).then((result) => {
         expect(result).toEqual({
           data: {
             chart: {
               level: {
                 leaderboard: [
-                  { rank: 1, entry: { playerName: 'A', score: 555555 } },
-                  { rank: 2, entry: { playerName: 'B', score: 400000 } },
-                  { rank: 3, entry: { playerName: 'C', score: 200000 } }
+                  { rank: 1, entry: { player: { name: 'A' }, score: 555555 } },
+                  { rank: 2, entry: { player: { name: 'B' }, score: 400000 } },
+                  { rank: 3, entry: { player: { name: 'C' }, score: 200000 } }
                 ]
               }
             }

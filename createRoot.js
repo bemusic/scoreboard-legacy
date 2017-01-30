@@ -6,7 +6,7 @@ function createRoot ({
   playerRepository,
   tokenValidator
 }) {
-  return {
+  const root = {
     chart ({ md5 }) {
       return {
         level ({ playMode }) {
@@ -73,8 +73,22 @@ function createRoot ({
       linked: !!player.linkedTo
     }
   }
-}
 
-function rank (entries) {
-  return entries.map((entry, index) => ({ rank: index + 1, entry }))
+  function RankingEntry (entry) {
+    return {
+      score: entry.data.score,
+      player: () => playerRepository.findById(entry.playerId).then(player =>
+        player && PublicPlayerData(player)
+      )
+    }
+  }
+
+  function rank (entries) {
+    return entries.map((entry, index) => ({
+      rank: index + 1,
+      entry: RankingEntry(entry)
+    }))
+  }
+
+  return root
 }
