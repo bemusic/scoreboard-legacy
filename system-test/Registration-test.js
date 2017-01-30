@@ -31,7 +31,7 @@ step('Test player registration', () => {
     })
   }))
 
-  step('Link account', () => graphql(`mutation { linkPlayer(jwt: "a") { id, linked } }`))
+  step('Link account', () => graphql(`mutation { linkPlayer(jwt: "valid.flicknote.a") { id, linked } }`))
   step('id should be correct', () => action(state => {
     assert.deepEqual(state.response.data, {
       data: {

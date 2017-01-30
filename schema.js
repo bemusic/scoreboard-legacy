@@ -27,7 +27,12 @@ const schema = buildSchema(`
     linkPlayer(jwt: String!): PublicPlayerData
 
     # Saves the score
-    registerScore(jwt: String!, input: RegisterScoreInput!): RegisterScoreResult
+    registerScore(
+      jwt: String!,
+      md5: String!,
+      playMode: String!,
+      input: RegisterScoreInput!
+    ): RegisterScoreResult
   }
 
   # Result of saving the score

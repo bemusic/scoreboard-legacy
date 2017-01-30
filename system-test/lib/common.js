@@ -19,7 +19,7 @@ step('Clean up the database', () => {
       throw e
     })
   ))
-  drop('GameScore')
+  drop('RankingEntry')
   drop('LegacyUser')
   drop('Player')
 })
@@ -46,25 +46,29 @@ step('Start server', () => asyncAction(function * (state, context) {
   }
   const authenticationLayer = {
     'authentication:tokenValidator': {
-      create: () => ({
+      create: ({ playerRepository }) => ({
         validateToken: (token) => {
-          if (token === 'a') {
-            return Promise.resolve({
-              playerId: state.playerId,
-              userId: 'user|a'
-            })
+          const parts = token.split('.')
+          if (parts[0] === 'valid') {
+            return playerRepository.findByName(parts[1]).then(player => ({
+              playerId: player._id,
+              userId: parts[2]
+            }))
           }
           return Promise.reject(new Error('No known token found?'))
         }
-      })
+      }),
+      dependencies: {
+        playerRepository: 'repository:player'
+      }
     }
   }
   const services = Object.assign({ }, ...[
     configLayer,
     loggerLayer,
-    authenticationLayer,
     databaseLayer,
     configuration.repository,
+    authenticationLayer,
     configuration.api
   ])
   const container = yock(services, { log: context.log })
