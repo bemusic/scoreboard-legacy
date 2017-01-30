@@ -1,6 +1,6 @@
 /* eslint-env jest */
 const Promise = require('bluebird')
-const authenticationFlow = require('../authenticationFlow')
+const authenticationFlow = require('./authenticationFlow')
 
 describe('Bemuse authentication flow...', () => {
   describe('legacy user', () => {

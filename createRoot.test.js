@@ -1,8 +1,8 @@
 /* eslint-env jest */
 
 const { graphql } = require('graphql')
-const schema = require('../schema')
-const createRoot = require('../createRoot')
+const schema = require('./schema')
+const createRoot = require('./createRoot')
 
 describe('GraphQL endpoint', () => {
   describe('leaderboard', () => {

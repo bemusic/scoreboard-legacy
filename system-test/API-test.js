@@ -2,6 +2,8 @@ const { step, action } = require('prescript')
 const axios = require('axios')
 const Promise = require('bluebird')
 const assert = require('assert')
+const yock = require('../yock')
+const configuration = require('../configuration')
 
 const asyncAction = (g) => action(Promise.coroutine(g))
 
@@ -24,33 +26,50 @@ step('Clean up the database', () => {
 })
 
 step('Start server', () => asyncAction(function * (state, context) {
-  const createApiServer = require('../createApiServer')
-  const log4js = require('log4js')
-  const MongoDBRepositoryFactory = require('../MongoDBRepositoryFactory')
-
-  const db = state.db
-  const factory = new MongoDBRepositoryFactory({ db })
-  const logger = log4js.getLogger('HTTP')
-  logger.setLevel('ERROR')
-
-  const app = createApiServer({
-    logger,
-    legacyUserApiKey: '{{LEGACY_USER_API_KEY}}',
-    legacyUserRepository: factory.createLegacyUserRepository(),
-    rankingEntryRepository: factory.createRankingEntryRepository(),
-    playerRepository: factory.createPlayerRepository(),
-    tokenValidator: {
-      validateToken: (token) => {
-        if (token === 'a') {
-          return Promise.resolve({
-            playerId: state.playerId,
-            userId: 'user|a'
-          })
-        }
-        return Promise.reject(new Error('No known token found?'))
+  const configLayer = {
+    'config:legacyUser:apiKey': {
+      create: () => '{{LEGACY_USER_API_KEY}}'
+    }
+  }
+  const loggerLayer = {
+    'logger:http': {
+      create: () => {
+        const logger = require('log4js').getLogger('http')
+        logger.setLevel('ERROR')
+        return logger
       }
     }
-  })
+  }
+  const databaseLayer = {
+    'database:mongodb': {
+      create: () => state.db
+    }
+  }
+  const authenticationLayer = {
+    'authentication:tokenValidator': {
+      create: () => ({
+        validateToken: (token) => {
+          if (token === 'a') {
+            return Promise.resolve({
+              playerId: state.playerId,
+              userId: 'user|a'
+            })
+          }
+          return Promise.reject(new Error('No known token found?'))
+        }
+      })
+    }
+  }
+  const services = Object.assign({ }, ...[
+    configLayer,
+    loggerLayer,
+    authenticationLayer,
+    databaseLayer,
+    configuration.repository,
+    configuration.api
+  ])
+  const container = yock(services, { log: context.log })
+  const app = yield container.get('api:app')
   return yield new Promise((resolve, reject) => {
     app.listen(0, function (err) {
       if (err) return reject(err)
