@@ -25,6 +25,21 @@ const schema = buildSchema(`
 
     # Link player to an auth account
     linkPlayer(jwt: String!): PublicPlayerData
+
+    # Saves the score
+    registerScore(jwt: String!, input: RegisterScoreInput!): RegisterScoreResult
+  }
+
+  # Result of saving the score
+  input RegisterScoreInput {
+    score: Int!
+    combo: Int!
+    count: Int!
+    log: String!
+  }
+  type RegisterScoreResult {
+    resultingRow: LeaderboardRow
+    level: Level
   }
 
   # The current player.
@@ -101,8 +116,8 @@ const schema = buildSchema(`
     # The play number (out of playCount) for this particular score.
     playNumber: Int!
 
-    # The name of the player.
-    playerName: String!
+    # The player.
+    player: PublicPlayerData!
   }
 `)
 
