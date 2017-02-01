@@ -7,7 +7,8 @@ describe('ScoreData', () => {
       const result = ScoreData.update(null, {
         score: 505050,
         combo: 91,
-        count: 93,
+        total: 93,
+        count: [ 90, 3, 0, 0, 0 ],
         log: 'A1B2'
       })
       expect(result.recordedAt).toBeInstanceOf(Date)
@@ -16,7 +17,8 @@ describe('ScoreData', () => {
         playCount: 1,
         playNumber: 1,
         combo: 91,
-        count: 93,
+        total: 93,
+        count: [ 90, 3, 0, 0, 0 ],
         log: 'A1B2',
         score: 505050
       })
@@ -26,7 +28,8 @@ describe('ScoreData', () => {
         playCount: 1,
         playNumber: 1,
         combo: 91,
-        count: 93,
+        total: 93,
+        count: [ 90, 3, 0, 0, 0 ],
         log: 'A1B2',
         score: 505050,
         recordedAt: new Date()
@@ -34,14 +37,16 @@ describe('ScoreData', () => {
       const result = ScoreData.update(oldData, {
         score: 505049,
         combo: 90,
-        count: 93,
+        total: 93,
+        count: [ 90, 2, 1, 0, 0 ],
         log: 'A0B3'
       })
       expect(result).toEqual({
         playCount: 2,
         playNumber: 1,
         combo: 91,
-        count: 93,
+        total: 93,
+        count: [ 90, 3, 0, 0, 0 ],
         log: 'A1B2',
         score: 505050,
         recordedAt: oldData.recordedAt
@@ -52,7 +57,8 @@ describe('ScoreData', () => {
         playCount: 2,
         playNumber: 1,
         combo: 91,
-        count: 93,
+        total: 93,
+        count: [ 90, 3, 0, 0, 0 ],
         log: 'A1B2',
         score: 505050,
         recordedAt: new Date(0)
@@ -60,7 +66,8 @@ describe('ScoreData', () => {
       const result = ScoreData.update(oldData, {
         score: 535251,
         combo: 92,
-        count: 93,
+        total: 93,
+        count: [ 91, 2, 0, 0, 0 ],
         log: 'A2B1'
       })
       expect(+result.recordedAt).toBeGreaterThan(+oldData.recordedAt)
@@ -69,7 +76,8 @@ describe('ScoreData', () => {
         playCount: 3,
         playNumber: 3,
         combo: 92,
-        count: 93,
+        total: 93,
+        count: [ 91, 2, 0, 0, 0 ],
         log: 'A2B1',
         score: 535251
       })

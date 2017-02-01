@@ -39,7 +39,8 @@ const schema = buildSchema(`
   input RegisterScoreInput {
     score: Int!
     combo: Int!
-    count: Int!
+    count: [Int]!
+    total: Int!
     log: String!
   }
   type RegisterScoreResult {

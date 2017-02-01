@@ -1,3 +1,5 @@
+const ScoreData = require('./ScoreData')
+
 module.exports = createRoot
 
 function createRoot ({
@@ -69,11 +71,32 @@ function createRoot ({
           const userId = tokenInfo.userId
           return playerRepository.findByUserId(userId).then(player => {
             if (!player) throw new Error('Player with specified user ID not found.')
-            // TODO save score playerId, input
+            const playerId = player._id
+            return rankingEntryRepository
+              .fetchLeaderboardEntry({ md5, playMode, playerId })
+              .then(existingEntry => {
+                const existingData = existingEntry && existingEntry.data
+                const nextData = ScoreData.update(existingData, input)
+                return rankingEntryRepository
+                  .saveLeaderboardEntry({ md5, playMode, playerId, data: nextData })
+              })
+              .then(() => {
+                return rankingEntryRepository
+                  .fetchLeaderboardEntry({ md5, playMode, playerId })
+              })
+              .then(entry => {
+                return rankingEntryRepository
+                  .calculateRank({ md5, playMode, playerId }, entry.data.score)
+                  .then(rank => {
+                    return {
+                      resultingRow: { rank, entry: RankingEntry(entry) },
+                      level: root.chart({ md5 }).level({ playMode })
+                    }
+                  })
+              })
           })
         })
-    },
-    me: () => Promise.reject(new Error('Not implemented yet~'))
+    }
   }
 
   function PublicPlayerData (player) {
@@ -86,7 +109,13 @@ function createRoot ({
 
   function RankingEntry (entry) {
     return {
+      id: String(entry._id),
       score: entry.data.score,
+      combo: entry.data.combo,
+      count: entry.data.count,
+      total: entry.data.total,
+      playNumber: entry.data.playNumber,
+      playCount: entry.data.playCount,
       player: () => playerRepository.findById(entry.playerId).then(player =>
         player && PublicPlayerData(player)
       )

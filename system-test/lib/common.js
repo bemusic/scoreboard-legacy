@@ -2,6 +2,7 @@ const { step, action, cleanup } = require('prescript')
 const axios = require('axios')
 const Promise = require('bluebird')
 const yock = require('../../yock')
+const util = require('util')
 const configuration = require('../../configuration')
 
 const asyncAction = (g) => action(Promise.coroutine(g))
@@ -92,7 +93,7 @@ exports.graphql = (query) => step(`GraphQL \`${query}\``, () => asyncAction(func
   })
   try {
     state.response = yield client.post('/graphql', { query })
-    context.log('OK', state.response.data)
+    context.log('OK', util.inspect(state.response.data, { depth: 10 }))
   } catch (e) {
     context.log('Error', e.response.data)
     throw e

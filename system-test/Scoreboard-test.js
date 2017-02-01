@@ -19,12 +19,13 @@ step('Save scores', () => {
       input: {
         score: 400000,
         combo: 50,
-        count: 30,
+        total: 150,
+        count: [ 10, 20, 30, 40, 50 ],
         log: "ABCX"
       }
     ) {
-      resultingRow { rank, entry { id, player { name } } }
-      level { leaderboard { rank, entry { id, player { name } } } }
+      resultingRow { rank, entry { id, playCount, score, combo, count, player { name } } }
+      level { leaderboard { rank, entry { id, score, combo, count, player { name } } } }
     }
   }`))
 })
