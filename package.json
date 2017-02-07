@@ -44,6 +44,9 @@
     "reporter": [
       "lcovonly",
       "text-summary"
+    ],
+    "exclude": [
+      "system-test/**/*.js"
     ]
   }
 }
