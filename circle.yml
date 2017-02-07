@@ -4,5 +4,7 @@ machine:
   services:
     - mongodb
 test:
+  override:
+    - npm run ci:test
   post:
     - bash <(curl -s https://codecov.io/bash)

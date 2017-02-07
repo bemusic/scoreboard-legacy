@@ -8,7 +8,8 @@
   "scripts": {
     "start": "node index.js",
     "install": "npm rebuild bcrypt",
-    "test": "jest --coverage"
+    "test": "jest --coverage",
+    "ci:test": "jest && prescript system-test/Scoreboard-test.js && prescript system-test/Registration-test.js"
   },
   "dependencies": {
     "axios": "^0.15.3",
