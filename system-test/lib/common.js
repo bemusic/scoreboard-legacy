@@ -1,4 +1,4 @@
-const { step, action, cleanup } = require('prescript')
+const { step, action, cleanup, onFinish } = require('prescript')
 const axios = require('axios')
 const Promise = require('bluebird')
 const yock = require('../../yock')
@@ -100,6 +100,9 @@ exports.graphql = (query) => step(`GraphQL \`${query}\``, () => asyncAction(func
   }
 }))
 
-cleanup('Quit', () => action(() => {
-  setTimeout(() => process.exit(0), 1000)
-}))
+onFinish(() => {
+  cleanup('Quit', () => action(state => {
+    state.server.close()
+    state.db.close()
+  }))
+})
