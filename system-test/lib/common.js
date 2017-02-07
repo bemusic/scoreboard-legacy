@@ -1,9 +1,9 @@
-const { step, action } = require('prescript')
+const { step, action, cleanup, onFinish } = require('prescript')
 const axios = require('axios')
 const Promise = require('bluebird')
-const assert = require('assert')
-const yock = require('../yock')
-const configuration = require('../configuration')
+const yock = require('../../yock')
+const util = require('util')
+const configuration = require('../../configuration')
 
 const asyncAction = (g) => action(Promise.coroutine(g))
 
@@ -20,7 +20,7 @@ step('Clean up the database', () => {
       throw e
     })
   ))
-  drop('GameScore')
+  drop('RankingEntry')
   drop('LegacyUser')
   drop('Player')
 })
@@ -47,25 +47,29 @@ step('Start server', () => asyncAction(function * (state, context) {
   }
   const authenticationLayer = {
     'authentication:tokenValidator': {
-      create: () => ({
+      create: ({ playerRepository }) => ({
         validateToken: (token) => {
-          if (token === 'a') {
-            return Promise.resolve({
-              playerId: state.playerId,
-              userId: 'user|a'
-            })
+          const parts = token.split('.')
+          if (parts[0] === 'valid') {
+            return playerRepository.findByName(parts[1]).then(player => ({
+              playerId: player._id,
+              userId: parts[2]
+            }))
           }
           return Promise.reject(new Error('No known token found?'))
         }
-      })
+      }),
+      dependencies: {
+        playerRepository: 'repository:player'
+      }
     }
   }
   const services = Object.assign({ }, ...[
     configLayer,
     loggerLayer,
-    authenticationLayer,
     databaseLayer,
     configuration.repository,
+    authenticationLayer,
     configuration.api
   ])
   const container = yock(services, { log: context.log })
@@ -83,61 +87,23 @@ step('Start server', () => asyncAction(function * (state, context) {
   })
 }))
 
-const graphql = (query) => step(`GraphQL \`${query}\``, () => asyncAction(function * (state, context) {
+exports.graphql = (query) => step(`GraphQL \`${query}\``, () => asyncAction(function * (state, context) {
   const client = axios.create({
     baseURL: 'http://localhost:' + state.serverAddress.port
   })
   try {
     state.response = yield client.post('/graphql', { query })
-    context.log('OK', state.response.data)
+    context.log('OK', util.inspect(state.response.data, { depth: 10 }))
   } catch (e) {
+    if (e.response) state.response = e.response
     context.log('Error', e.response.data)
     throw e
   }
 }))
 
-step('Test player registration', () => {
-  step('Query flicknote', () => graphql(`query { player(name: "flicknote") { id } }`))
-  step('User should be null', () => action(state => {
-    assert.deepEqual(state.response.data, {
-      data: {
-        player: null
-      }
-    })
-  }))
-
-  step('Register flicknote', () => graphql(`mutation { registerPlayer(name: "flicknote") { id } }`))
-  step('Should receive the ID', () => action(state => {
-    const playerId = state.response.data.data.registerPlayer.id
-    assert.equal(typeof playerId, 'string')
-    state.playerId = playerId
-  }))
-
-  step('Query flicknote', () => graphql(`query { player(name: "flicknote") { id, linked } }`))
-  step('id should be correct', () => action(state => {
-    assert.deepEqual(state.response.data, {
-      data: {
-        player: {
-          id: state.playerId,
-          linked: false
-        }
-      }
-    })
-  }))
-
-  step('Link account', () => graphql(`mutation { linkPlayer(jwt: "a") { id, linked } }`))
-  step('id should be correct', () => action(state => {
-    assert.deepEqual(state.response.data, {
-      data: {
-        linkPlayer: {
-          id: state.playerId,
-          linked: true
-        }
-      }
-    })
+onFinish(() => {
+  cleanup('Quit', () => action(state => {
+    state.server.close()
+    state.db.close()
   }))
 })
-
-step('Quit', () => action(() => {
-  setTimeout(() => process.exit(0), 1000)
-}))

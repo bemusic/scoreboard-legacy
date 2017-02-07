@@ -5,15 +5,41 @@ module.exports = MongoDBRepositoryFactory
 function MongoDBRepositoryFactory ({ db }) {
   return {
     createRankingEntryRepository () {
+      const rankingEntryCollection = db.collection('RankingEntry')
       return {
         fetchLeaderboardEntries ({ md5, playMode, max }) {
-          return (db
-            .collection('GameScore')
+          return (rankingEntryCollection
             .find({ md5: String(md5), playMode: String(playMode) })
             .sort([ [ 'score', -1 ] ])
             .limit(Math.max(1, Math.min(+max || 50, 50)))
             .toArray()
-            .then((result) => result.map(toRankingEntry))
+          )
+        },
+        fetchLeaderboardEntry ({ md5, playMode, playerId }) {
+          return (rankingEntryCollection
+            .find({ md5: String(md5), playMode: String(playMode), playerId: String(playerId) })
+            .limit(1)
+            .toArray()
+            .then((result) => result[0] || null)
+          )
+        },
+        saveLeaderboardEntry ({ md5, playMode, playerId, data }) {
+          return (rankingEntryCollection
+            .updateOne(
+              { md5: String(md5), playMode: String(playMode), playerId: String(playerId) },
+              { $set: { data: data, updatedAt: new Date() } },
+              { upsert: true }
+            )
+          )
+        },
+        calculateRank ({ md5, playMode, score }) {
+          return (rankingEntryCollection
+            .count({
+              md5: String(md5),
+              playMode: String(playMode),
+              'data.score': { $gt: +score }
+            })
+            .then(count => count + 1)
           )
         }
       }
@@ -42,10 +68,8 @@ function MongoDBRepositoryFactory ({ db }) {
     },
     createPlayerRepository () {
       const playerCollection = db.collection('Player')
-      playerCollection.createIndex(
-        { playerName: 1 },
-        { unique: true }
-      )
+      playerCollection.createIndex({ playerName: 1 }, { unique: true })
+      playerCollection.createIndex({ linkedTo: 1 })
       return {
         findByName (playerName) {
           return (playerCollection
@@ -58,6 +82,14 @@ function MongoDBRepositoryFactory ({ db }) {
         findById (playerId) {
           return (playerCollection
             .find({ _id: String(playerId) })
+            .limit(1)
+            .toArray()
+            .then((result) => result[0])
+          )
+        },
+        findByUserId (userId) {
+          return (playerCollection
+            .find({ linkedTo: String(userId) })
             .limit(1)
             .toArray()
             .then((result) => result[0])
@@ -81,21 +113,5 @@ function MongoDBRepositoryFactory ({ db }) {
         }
       }
     }
-  }
-}
-
-function toRankingEntry (doc) {
-  return {
-    id: String(doc._id),
-    md5: doc.md5,
-    playMode: doc.playMode,
-    score: doc.score,
-    total: doc.total,
-    combo: doc.combo,
-    count: doc.count,
-    log: doc.log,
-    playNumber: doc.playNumber,
-    playCount: doc.playCount,
-    playerName: doc.playerName
   }
 }

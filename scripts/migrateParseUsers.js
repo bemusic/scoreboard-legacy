@@ -2,7 +2,7 @@ const MongoClient = require('mongodb').MongoClient
 const Promise = require('bluebird')
 const log4js = require('log4js')
 
-console.log('Parse migration script...')
+console.log('Parse user migration script...')
 
 const fromUrl = process.argv[2]
 const toUrl = process.argv[3]

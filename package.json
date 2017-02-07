@@ -8,7 +8,8 @@
   "scripts": {
     "start": "node index.js",
     "install": "npm rebuild bcrypt",
-    "test": "jest --coverage"
+    "test": "jest --coverage",
+    "system-tests": "prescript system-test/Scoreboard-test.js && prescript system-test/Registration-test.js"
   },
   "dependencies": {
     "axios": "^0.15.3",
@@ -27,11 +28,25 @@
   "devDependencies": {
     "codecov": "^1.0.1",
     "jest": "^17.0.3",
+    "nyc": "^10.1.2",
     "prescript": "^0.120.1",
     "standard": "^8.5.0",
     "supertest": "^2.0.1"
   },
   "engines": {
     "node": "7.4.0"
+  },
+  "jest": {
+    "coverageDirectory": "coverage/unit"
+  },
+  "nyc": {
+    "report-dir": "coverage/system",
+    "reporter": [
+      "lcovonly",
+      "text-summary"
+    ],
+    "exclude": [
+      "system-test/**/*.js"
+    ]
   }
 }

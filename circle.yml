@@ -3,4 +3,5 @@ machine:
     version: '6.9.0'
 test:
   post:
+    - ./node_modules/.bin/nyc npm run system-tests
     - bash <(curl -s https://codecov.io/bash)

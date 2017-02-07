@@ -1,3 +1,5 @@
+const ScoreData = require('./ScoreData')
+
 module.exports = createRoot
 
 function createRoot ({
@@ -6,7 +8,7 @@ function createRoot ({
   playerRepository,
   tokenValidator
 }) {
-  return {
+  const root = {
     chart ({ md5 }) {
       return {
         level ({ playMode }) {
@@ -63,7 +65,38 @@ function createRoot ({
           })
         })
     },
-    me: () => Promise.reject(new Error('Not implemented yet~'))
+    registerScore ({ jwt, md5, playMode, input }) {
+      return tokenValidator.validateToken(jwt)
+        .then(tokenInfo => {
+          const userId = tokenInfo.userId
+          return playerRepository.findByUserId(userId).then(player => {
+            if (!player) throw new Error('Player with specified user ID not found.')
+            const playerId = player._id
+            return rankingEntryRepository
+              .fetchLeaderboardEntry({ md5, playMode, playerId })
+              .then(existingEntry => {
+                const existingData = existingEntry && existingEntry.data
+                const nextData = ScoreData.update(existingData, input)
+                return rankingEntryRepository
+                  .saveLeaderboardEntry({ md5, playMode, playerId, data: nextData })
+              })
+              .then(() => {
+                return rankingEntryRepository
+                  .fetchLeaderboardEntry({ md5, playMode, playerId })
+              })
+              .then(entry => {
+                return rankingEntryRepository
+                  .calculateRank({ md5, playMode, score: entry.data.score })
+                  .then(rank => {
+                    return {
+                      resultingRow: { rank, entry: RankingEntry(entry) },
+                      level: root.chart({ md5 }).level({ playMode })
+                    }
+                  })
+              })
+          })
+        })
+    }
   }
 
   function PublicPlayerData (player) {
@@ -73,8 +106,28 @@ function createRoot ({
       linked: !!player.linkedTo
     }
   }
-}
 
-function rank (entries) {
-  return entries.map((entry, index) => ({ rank: index + 1, entry }))
+  function RankingEntry (entry) {
+    return {
+      id: String(entry._id),
+      score: entry.data.score,
+      combo: entry.data.combo,
+      count: entry.data.count,
+      total: entry.data.total,
+      playNumber: entry.data.playNumber,
+      playCount: entry.data.playCount,
+      player: () => playerRepository.findById(entry.playerId).then(player =>
+        player && PublicPlayerData(player)
+      )
+    }
+  }
+
+  function rank (entries) {
+    return entries.map((entry, index) => ({
+      rank: index + 1,
+      entry: RankingEntry(entry)
+    }))
+  }
+
+  return root
 }

@@ -43,3 +43,4 @@ Icon
 .Trashes
 
 *.env
+.nyc_output
