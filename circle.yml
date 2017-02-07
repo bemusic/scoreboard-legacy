@@ -1,8 +1,6 @@
 machine:
   node:
     version: '6.9.0'
-  services:
-    - mongodb
 test:
   post:
     - ./node_modules/.bin/nyc npm run system-tests
