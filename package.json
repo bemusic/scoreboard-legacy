@@ -40,6 +40,10 @@
     "coverageDirectory": "coverage/unit"
   },
   "nyc": {
-    "report-dir": "coverage/system"
+    "report-dir": "coverage/system",
+    "reporter": [
+      "lcovonly",
+      "text-summary"
+    ]
   }
 }
