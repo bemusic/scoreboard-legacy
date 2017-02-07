@@ -9,7 +9,7 @@
     "start": "node index.js",
     "install": "npm rebuild bcrypt",
     "test": "jest --coverage",
-    "ci:test": "jest && prescript system-test/Scoreboard-test.js && prescript system-test/Registration-test.js"
+    "system-tests": "prescript system-test/Scoreboard-test.js && prescript system-test/Registration-test.js"
   },
   "dependencies": {
     "axios": "^0.15.3",
@@ -34,5 +34,11 @@
   },
   "engines": {
     "node": "7.4.0"
+  },
+  "jest": {
+    "coverageDirectory": "coverage/unit"
+  },
+  "nyc": {
+    "report-dir": "coverage/system"
   }
 }
