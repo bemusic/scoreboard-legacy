@@ -32,13 +32,12 @@ function MongoDBRepositoryFactory ({ db }) {
             )
           )
         },
-        calculateRank ({ md5, playMode, playerId, score }) {
+        calculateRank ({ md5, playMode, score }) {
           return (rankingEntryCollection
             .count({
               md5: String(md5),
               playMode: String(playMode),
-              playerId: String(playerId),
-              score: { $gt: +score }
+              'data.score': { $gt: +score }
             })
             .then(count => count + 1)
           )

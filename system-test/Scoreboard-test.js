@@ -10,24 +10,43 @@ step('Register players', () => {
   step('Link account dtinth', () => graphql(`mutation { linkPlayer(jwt: "valid.dtinth.b") { id, linked } }`))
 })
 
-step('Save scores', () => {
-  step('Save flicknote score', () => graphql(`mutation {
-    registerScore(
-      jwt: "valid.flicknote.a",
-      md5: "01234567012345670123456701234567",
-      playMode: "BM",
-      input: {
-        score: 400000,
-        combo: 50,
-        total: 150,
-        count: [ 10, 20, 30, 40, 50 ],
-        log: "ABCX"
-      }
-    ) {
-      resultingRow { rank, entry { id, playCount, score, combo, count, player { name } } }
-      level { leaderboard { rank, entry { id, score, combo, count, player { name } } } }
+step('Save flicknote score', () => graphql(`mutation {
+  registerScore(
+    jwt: "valid.flicknote.a",
+    md5: "01234567012345670123456701234567",
+    playMode: "BM",
+    input: {
+      score: 400000,
+      combo: 50,
+      total: 150,
+      count: [ 10, 20, 30, 40, 50 ],
+      log: "ABCX"
     }
-  }`))
-})
+  ) {
+    resultingRow { rank, entry { id, playCount, score, combo, count, player { name } } }
+    level { leaderboard { rank, entry { id, score, combo, count, player { name } } } }
+  }
+}`))
 
-require('prescript').pending()
+step('Save dtinth score', () => graphql(`mutation {
+  registerScore(
+    jwt: "valid.dtinth.b",
+    md5: "01234567012345670123456701234567",
+    playMode: "BM",
+    input: {
+      score: 300000,
+      combo: 50,
+      total: 150,
+      count: [ 10, 20, 30, 40, 50 ],
+      log: "ABCX"
+    }
+  ) {
+    resultingRow { rank, entry { id, playCount, score, combo, count, player { name } } }
+    level { leaderboard { rank, entry { id, score, combo, count, player { name } } } }
+  }
+}`))
+step('Verify result', () => action(state => {
+  const { data } = state.response.data
+  assert.equal(data.registerScore.resultingRow.rank, 2)
+  assert.equal(data.registerScore.resultingRow.entry.playCount, 1)
+}))

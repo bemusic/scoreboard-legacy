@@ -95,6 +95,7 @@ exports.graphql = (query) => step(`GraphQL \`${query}\``, () => asyncAction(func
     state.response = yield client.post('/graphql', { query })
     context.log('OK', util.inspect(state.response.data, { depth: 10 }))
   } catch (e) {
+    if (e.response) state.response = e.response
     context.log('Error', e.response.data)
     throw e
   }

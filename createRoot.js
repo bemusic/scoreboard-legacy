@@ -86,7 +86,7 @@ function createRoot ({
               })
               .then(entry => {
                 return rankingEntryRepository
-                  .calculateRank({ md5, playMode, playerId }, entry.data.score)
+                  .calculateRank({ md5, playMode, score: entry.data.score })
                   .then(rank => {
                     return {
                       resultingRow: { rank, entry: RankingEntry(entry) },
