@@ -6,11 +6,12 @@ function MongoDBRepositoryFactory ({ db }) {
   return {
     createRankingEntryRepository () {
       const rankingEntryCollection = db.collection('RankingEntry')
+      rankingEntryCollection.createIndex({ md5: 1, playMode: 1, playerId: 1 }, { unique: true })
       return {
         fetchLeaderboardEntries ({ md5, playMode, max }) {
           return (rankingEntryCollection
             .find({ md5: String(md5), playMode: String(playMode) })
-            .sort([ [ 'score', -1 ] ])
+            .sort([ [ 'data.score', -1 ] ])
             .limit(Math.max(1, Math.min(+max || 50, 50)))
             .toArray()
           )

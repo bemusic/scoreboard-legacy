@@ -16,7 +16,6 @@ function update (original, data) {
         +data.count[4] || 0
       ],
       total: +data.total || 0,
-      log: String(data.log),
       recordedAt: new Date()
     })
   } else {

@@ -8,8 +8,7 @@ describe('ScoreData', () => {
         score: 505050,
         combo: 91,
         total: 93,
-        count: [ 90, 3, 0, 0, 0 ],
-        log: 'A1B2'
+        count: [ 90, 3, 0, 0, 0 ]
       })
       expect(result.recordedAt).toBeInstanceOf(Date)
       delete result.recordedAt
@@ -19,7 +18,6 @@ describe('ScoreData', () => {
         combo: 91,
         total: 93,
         count: [ 90, 3, 0, 0, 0 ],
-        log: 'A1B2',
         score: 505050
       })
     })
@@ -30,7 +28,6 @@ describe('ScoreData', () => {
         combo: 91,
         total: 93,
         count: [ 90, 3, 0, 0, 0 ],
-        log: 'A1B2',
         score: 505050,
         recordedAt: new Date()
       }
@@ -38,8 +35,7 @@ describe('ScoreData', () => {
         score: 505049,
         combo: 90,
         total: 93,
-        count: [ 90, 2, 1, 0, 0 ],
-        log: 'A0B3'
+        count: [ 90, 2, 1, 0, 0 ]
       })
       expect(result).toEqual({
         playCount: 2,
@@ -47,7 +43,6 @@ describe('ScoreData', () => {
         combo: 91,
         total: 93,
         count: [ 90, 3, 0, 0, 0 ],
-        log: 'A1B2',
         score: 505050,
         recordedAt: oldData.recordedAt
       })
@@ -59,7 +54,6 @@ describe('ScoreData', () => {
         combo: 91,
         total: 93,
         count: [ 90, 3, 0, 0, 0 ],
-        log: 'A1B2',
         score: 505050,
         recordedAt: new Date(0)
       }
@@ -67,8 +61,7 @@ describe('ScoreData', () => {
         score: 535251,
         combo: 92,
         total: 93,
-        count: [ 91, 2, 0, 0, 0 ],
-        log: 'A2B1'
+        count: [ 91, 2, 0, 0, 0 ]
       })
       expect(+result.recordedAt).toBeGreaterThan(+oldData.recordedAt)
       delete result.recordedAt
@@ -78,7 +71,6 @@ describe('ScoreData', () => {
         combo: 92,
         total: 93,
         count: [ 91, 2, 0, 0, 0 ],
-        log: 'A2B1',
         score: 535251
       })
     })
