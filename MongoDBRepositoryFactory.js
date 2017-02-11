@@ -6,6 +6,7 @@ function MongoDBRepositoryFactory ({ db }) {
   return {
     createRankingEntryRepository () {
       const rankingEntryCollection = db.collection('RankingEntry')
+      rankingEntryCollection.createIndex({ md5: 1, playMode: 1, playerId: 1 }, { unique: true })
       return {
         fetchLeaderboardEntries ({ md5, playMode, max }) {
           return (rankingEntryCollection
