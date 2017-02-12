@@ -20,9 +20,9 @@ describe('GraphQL endpoint', () => {
       const rankingEntryRepository = {
         fetchLeaderboardEntries ({ md5, playMode, max }) {
           return Promise.resolve([
-            { playerId: 'A', data: { score: 555555, combo: 4000 } },
-            { playerId: 'B', data: { score: 400000, combo: 400 } },
-            { playerId: 'C', data: { score: 200000, combo: 40 } }
+            { playerId: 'A', data: { score: 555555, combo: 4000, recordedAt: new Date() } },
+            { playerId: 'B', data: { score: 400000, combo: 400, recordedAt: new Date() } },
+            { playerId: 'C', data: { score: 200000, combo: 40, recordedAt: new Date() } }
           ])
         }
       }

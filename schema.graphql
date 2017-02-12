@@ -119,6 +119,9 @@ type RankingEntry {
   # The play number (out of playCount) for this particular score.
   playNumber: Int!
 
+  # The time when this is recorded
+  recordedAt: String!
+
   # The player.
   player: PublicPlayerData!
 }
