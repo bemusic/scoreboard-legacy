@@ -114,6 +114,7 @@ function createRoot ({
       combo: entry.data.combo,
       count: entry.data.count,
       total: entry.data.total,
+      recordedAt: entry.data.recordedAt.toJSON(),
       playNumber: entry.data.playNumber,
       playCount: entry.data.playCount,
       player: () => playerRepository.findById(entry.playerId).then(player =>
