@@ -16,6 +16,12 @@ function MongoDBRepositoryFactory ({ db }) {
             .toArray()
           )
         },
+        fetchPlayerEntries ({ md5s, playerId }) {
+          return (rankingEntryCollection
+            .find({ md5: { $in: md5s.map(x => String(x)) }, playerId: String(playerId) })
+            .toArray()
+          )
+        },
         fetchLeaderboardEntry ({ md5, playMode, playerId }) {
           return (rankingEntryCollection
             .find({ md5: String(md5), playMode: String(playMode), playerId: String(playerId) })
