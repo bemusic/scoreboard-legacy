@@ -20,6 +20,13 @@ function createRoot ({
                 .fetchLeaderboardEntries(options)
                 .then(rank)
               )
+            },
+            myRecord ({ jwt }) {
+              return tokenValidator.validateToken(jwt)
+                .then(tokenInfo => {
+                  const playerId = tokenInfo.playerId
+                  return fetchLeaderboardRow({ md5, playMode, playerId })
+                })
             }
           }
         }
@@ -36,6 +43,26 @@ function createRoot ({
         })
         .then(player => {
           return player && PublicPlayerData(player)
+        })
+    },
+    me ({ jwt }) {
+      return tokenValidator.validateToken(jwt)
+        .then(tokenInfo => {
+          const playerId = tokenInfo.playerId
+          return {
+            records ({ md5s }) {
+              return rankingEntryRepository.fetchPlayerEntries({ md5s, playerId })
+                .then(results => {
+                  return results.map(rankingEntry => {
+                    return {
+                      md5: rankingEntry.md5,
+                      playMode: rankingEntry.playMode,
+                      entry: RankingEntry(rankingEntry)
+                    }
+                  })
+                })
+            }
+          }
         })
     },
     registerPlayer ({ name }) {
@@ -81,22 +108,29 @@ function createRoot ({
                   .saveLeaderboardEntry({ md5, playMode, playerId, data: nextData })
               })
               .then(() => {
-                return rankingEntryRepository
-                  .fetchLeaderboardEntry({ md5, playMode, playerId })
+                return fetchLeaderboardRow({ md5, playMode, playerId })
               })
-              .then(entry => {
-                return rankingEntryRepository
-                  .calculateRank({ md5, playMode, score: entry.data.score })
-                  .then(rank => {
-                    return {
-                      resultingRow: { rank, entry: RankingEntry(entry) },
-                      level: root.chart({ md5 }).level({ playMode })
-                    }
-                  })
+              .then(row => {
+                return {
+                  resultingRow: row,
+                  level: root.chart({ md5 }).level({ playMode })
+                }
               })
           })
         })
     }
+  }
+
+  function fetchLeaderboardRow ({ md5, playMode, playerId }) {
+    return rankingEntryRepository
+      .fetchLeaderboardEntry({ md5, playMode, playerId })
+      .then(entry => {
+        return rankingEntryRepository
+          .calculateRank({ md5, playMode, score: entry.data.score })
+          .then(rank => {
+            return { rank, entry: RankingEntry(entry) }
+          })
+      })
   }
 
   function PublicPlayerData (player) {

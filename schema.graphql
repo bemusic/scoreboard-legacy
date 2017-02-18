@@ -9,7 +9,7 @@ type Query {
   chart(md5: String!): Chart
 
   # The current player.
-  me: Self
+  me(jwt: String!): Self
 
   # Queries a player by name
   player(name: String!): PublicPlayerData
@@ -48,7 +48,13 @@ type RegisterScoreResult {
 # The current player.
 type Self {
   # Queries my own record of charts.
-  records(ids: [String]): [RankingEntry]
+  records(md5s: [String]): [ChartRankingEntry]
+}
+
+type ChartRankingEntry {
+  md5: String!
+  playMode: String!
+  entry: RankingEntry
 }
 
 # A publicly-accessible player data
@@ -76,6 +82,9 @@ type Chart {
 type Level {
   # A leaderboard associated with this level.
   leaderboard(max: Int): [LeaderboardRow]
+
+  # A leaderboard associated with this level.
+  myRecord(jwt: String!): LeaderboardRow
 }
 
 # A leaderboard row
