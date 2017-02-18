@@ -1,7 +1,23 @@
-machine:
-  node:
-    version: '6.9.0'
-test:
-  post:
-    - ./node_modules/.bin/nyc npm run system-tests
-    - bash <(curl -s https://codecov.io/bash)
+version: 2
+executorType: docker
+containerInfo:
+  - image: node:6
+  - image: mongo:latest
+stages:
+  build:
+    workDir: /home/ubuntu/bemuse-scoreboard
+    steps:
+      - type: checkout
+      - type: shell
+        name: Install dependencies
+        command: npm install
+      - type: shell
+        name: Test
+        command: npm test
+      - type: shell
+        name: System tests
+        command: ./node_modules/.bin/nyc npm run system-tests
+      - type: shell
+        name: codecov
+        command: |
+          bash <(curl -s https://codecov.io/bash)
