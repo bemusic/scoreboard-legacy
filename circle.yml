@@ -20,4 +20,4 @@ stages:
       - type: shell
         name: codecov
         command: |
-          npm install -g dtinth/codecov-node && codecov
+          npm install -g 'dtinth/codecov-node#cci2' && codecov
