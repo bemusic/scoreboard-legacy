@@ -2,6 +2,7 @@ version: 2
 executorType: docker
 containerInfo:
   - image: node:6
+  - image: mongo:latest
 stages:
   build:
     workDir: /home/ubuntu/bemuse-scoreboard
