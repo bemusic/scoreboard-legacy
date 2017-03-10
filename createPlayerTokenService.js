@@ -16,7 +16,7 @@ module.exports = function createPlayerTokenService ({ secret }) {
     },
     generatePlayerToken (playerId) {
       return new Promise((resolve, reject) => {
-        const options = { algorithm: 'HS256', expiresIn: 86400e3 * 14 }
+        const options = { algorithm: 'HS256', expiresIn: '14 days' }
         jwt.sign({ sub: playerId }, secret, options, (err, token) => {
           if (err) return reject(err)
           resolve(token)
