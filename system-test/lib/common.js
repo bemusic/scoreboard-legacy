@@ -46,7 +46,7 @@ step('Start server', () => asyncAction(function * (state, context) {
     }
   }
   const authenticationLayer = {
-    'authentication:tokenValidator': {
+    'authentication:userTokenValidator': {
       create: ({ playerRepository }) => ({
         validateToken: (token) => {
           const parts = token.split('.')
