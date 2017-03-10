@@ -20,6 +20,9 @@ exports.config = {
   },
   'config:jwt:certificateUrl': {
     create: () => requiredEnv('JWT_CERTIFICATE_URL')
+  },
+  'config:playerToken:secret': {
+    create: () => requiredEnv('PLAYER_TOKEN_SECRET')
   }
 }
 
@@ -36,9 +39,13 @@ exports.authentication = {
     ),
     dependencies: { certificateUrl: 'config:jwt:certificateUrl' }
   },
-  'authentication:tokenValidator': {
+  'authentication:userTokenValidator': {
     create: require('./createTokenValidator'),
     dependencies: { certificate: 'authentication:jwt:certificate' }
+  },
+  'authentication:playerTokenService': {
+    create: require('./createPlayerTokenService'),
+    dependencies: { certificate: 'config:playerToken:secret' }
   }
 }
 
@@ -85,7 +92,8 @@ exports.api = {
       rankingEntryRepository: 'repository:rankingEntry',
       legacyUserRepository: 'repository:legacyUser',
       playerRepository: 'repository:player',
-      tokenValidator: 'authentication:tokenValidator'
+      userTokenValidator: 'authentication:userTokenValidator',
+      playerTokenService: 'authentication:playerTokenService'
     }
   },
   'api:app': {

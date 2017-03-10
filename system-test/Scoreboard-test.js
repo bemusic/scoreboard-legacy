@@ -10,9 +10,20 @@ step('Register players', () => {
   step('Link account dtinth', () => graphql(`mutation { linkPlayer(jwt: "valid.dtinth.b") { id, linked } }`))
 })
 
+step('Obtain player token', () => {
+  step('Obtain playerToken for flicknote', () => graphql(`mutation { authenticatePlayer(jwt: "valid.flicknote.a") { playerToken } }`))
+  step('Ensure correct token', () => action(state => {
+    assert.equal(state.response.data.data.authenticatePlayer.playerToken, 'valid.flicknote')
+  }))
+  step('Renew playerToken for flicknote', () => graphql(`mutation { renewPlayerToken(playerToken: "valid.flicknote") { playerToken } }`))
+  step('Ensure correct token', () => action(state => {
+    assert.equal(state.response.data.data.renewPlayerToken.playerToken, 'valid.flicknote')
+  }))
+})
+
 step('Save flicknote score', () => graphql(`mutation {
   registerScore(
-    jwt: "valid.flicknote.a",
+    playerToken: "valid.flicknote",
     md5: "01234567012345670123456701234567",
     playMode: "BM",
     input: {
@@ -30,7 +41,7 @@ step('Save flicknote score', () => graphql(`mutation {
 
 step('Save dtinth score', () => graphql(`mutation {
   registerScore(
-    jwt: "valid.dtinth.b",
+    playerToken: "valid.dtinth",
     md5: "01234567012345670123456701234567",
     playMode: "BM",
     input: {
@@ -54,7 +65,7 @@ step('Verify result', () => action(state => {
 step('Load single score', () => graphql(`query {
   chart (md5: "01234567012345670123456701234567") {
     level (playMode: "BM") {
-      myRecord (jwt: "valid.dtinth.b") {
+      myRecord (playerToken: "valid.dtinth") {
         rank, entry { score }
       }
     }
@@ -68,7 +79,7 @@ step('Verify result', () => action(state => {
 
 step('Save another score', () => graphql(`mutation {
   registerScore(
-    jwt: "valid.dtinth.b",
+    playerToken: "valid.dtinth",
     md5: "01234567012345670123456701234568",
     playMode: "BM",
     input: {
@@ -83,7 +94,7 @@ step('Save another score', () => graphql(`mutation {
   }
 }`))
 step('Load multiple scores', () => graphql(`query {
-  me (jwt: "valid.dtinth.b") {
+  me (playerToken: "valid.dtinth") {
     records (md5s: [
       "01234567012345670123456701234567",
       "01234567012345670123456701234568",
