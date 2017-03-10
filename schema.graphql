@@ -30,6 +30,17 @@ type Mutation {
     playMode: String!,
     input: RegisterScoreInput!
   ): RegisterScoreResult
+
+  # Exchanges the Auth0 ID token for player token
+  authenticatePlayer(jwt: String!): PlayerAuthenticationResult
+
+  # Renews the player token
+  renewPlayerToken(playerToken: String!): PlayerAuthenticationResult
+}
+
+# Result of player authentication
+type PlayerAuthenticationResult {
+  playerToken: String!
 }
 
 # Result of saving the score

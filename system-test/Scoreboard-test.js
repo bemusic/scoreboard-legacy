@@ -10,6 +10,17 @@ step('Register players', () => {
   step('Link account dtinth', () => graphql(`mutation { linkPlayer(jwt: "valid.dtinth.b") { id, linked } }`))
 })
 
+step('Obtain player token', () => {
+  step('Obtain playerToken for flicknote', () => graphql(`mutation { authenticatePlayer(jwt: "valid.flicknote.a") { playerToken } }`))
+  step('Ensure correct token', () => action(state => {
+    assert.equal(state.response.data.data.authenticatePlayer.playerToken, 'valid.flicknote')
+  }))
+  step('Renew playerToken for flicknote', () => graphql(`mutation { renewPlayerToken(playerToken: "valid.flicknote") { playerToken } }`))
+  step('Ensure correct token', () => action(state => {
+    assert.equal(state.response.data.data.renewPlayerToken.playerToken, 'valid.flicknote')
+  }))
+})
+
 step('Save flicknote score', () => graphql(`mutation {
   registerScore(
     jwt: "valid.flicknote.a",

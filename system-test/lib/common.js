@@ -62,6 +62,27 @@ step('Start server', () => asyncAction(function * (state, context) {
       dependencies: {
         playerRepository: 'repository:player'
       }
+    },
+    'authentication:playerTokenService': {
+      create: ({ playerRepository }) => ({
+        validatePlayerToken: (token) => {
+          const parts = token.split('.')
+          if (parts[0] === 'valid') {
+            return playerRepository.findByName(parts[1]).then(player => ({
+              playerId: player._id
+            }))
+          }
+          return Promise.reject(new Error('No known token found?'))
+        },
+        generatePlayerToken: (playerId) => {
+          return playerRepository.findById(playerId).then(player => {
+            return 'valid.' + player.playerName
+          })
+        }
+      }),
+      dependencies: {
+        playerRepository: 'repository:player'
+      }
     }
   }
   const services = Object.assign({ }, ...[

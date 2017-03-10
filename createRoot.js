@@ -6,7 +6,8 @@ function createRoot ({
   rankingEntryRepository,
   legacyUserRepository,
   playerRepository,
-  tokenValidator
+  playerTokenService,
+  userTokenValidator
 }) {
   const root = {
     chart ({ md5 }) {
@@ -22,7 +23,7 @@ function createRoot ({
               )
             },
             myRecord ({ jwt }) {
-              return tokenValidator.validateToken(jwt)
+              return userTokenValidator.validateToken(jwt)
                 .then(tokenInfo => {
                   const playerId = tokenInfo.playerId
                   return fetchLeaderboardRow({ md5, playMode, playerId })
@@ -46,7 +47,7 @@ function createRoot ({
         })
     },
     me ({ jwt }) {
-      return tokenValidator.validateToken(jwt)
+      return userTokenValidator.validateToken(jwt)
         .then(tokenInfo => {
           const playerId = tokenInfo.playerId
           return {
@@ -76,7 +77,7 @@ function createRoot ({
         })
     },
     linkPlayer ({ jwt }) {
-      return tokenValidator.validateToken(jwt)
+      return userTokenValidator.validateToken(jwt)
         .then(tokenInfo => {
           const playerId = tokenInfo.playerId
           const userId = tokenInfo.userId
@@ -93,7 +94,7 @@ function createRoot ({
         })
     },
     registerScore ({ jwt, md5, playMode, input }) {
-      return tokenValidator.validateToken(jwt)
+      return userTokenValidator.validateToken(jwt)
         .then(tokenInfo => {
           const userId = tokenInfo.userId
           return playerRepository.findByUserId(userId).then(player => {
@@ -117,6 +118,26 @@ function createRoot ({
                 }
               })
           })
+        })
+    },
+    authenticatePlayer ({ jwt }) {
+      return userTokenValidator.validateToken(jwt)
+        .then(tokenInfo => {
+          const userId = tokenInfo.userId
+          return playerRepository.findByUserId(userId).then(player => {
+            if (!player) throw new Error('Player with specified user ID not found.')
+            const playerId = player._id
+            return playerTokenService.generatePlayerToken(playerId)
+              .then(token => ({ playerToken: token }))
+          })
+        })
+    },
+    renewPlayerToken ({ playerToken }) {
+      return playerTokenService.validatePlayerToken(playerToken)
+        .then(tokenInfo => {
+          const playerId = tokenInfo.playerId
+          return playerTokenService.generatePlayerToken(playerId)
+            .then(token => ({ playerToken: token }))
         })
     }
   }
