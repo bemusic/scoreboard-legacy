@@ -45,7 +45,7 @@ exports.authentication = {
   },
   'authentication:playerTokenService': {
     create: require('./createPlayerTokenService'),
-    dependencies: { certificate: 'config:playerToken:secret' }
+    dependencies: { secret: 'config:playerToken:secret' }
   }
 }
 
