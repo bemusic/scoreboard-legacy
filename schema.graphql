@@ -9,7 +9,7 @@ type Query {
   chart(md5: String!): Chart
 
   # The current player.
-  me(jwt: String!): Self
+  me(playerToken: String!): Self
 
   # Queries a player by name
   player(name: String!): PublicPlayerData
@@ -25,7 +25,7 @@ type Mutation {
 
   # Saves the score
   registerScore(
-    jwt: String!,
+    playerToken: String!,
     md5: String!,
     playMode: String!,
     input: RegisterScoreInput!
@@ -95,7 +95,7 @@ type Level {
   leaderboard(max: Int): [LeaderboardRow]
 
   # A leaderboard associated with this level.
-  myRecord(jwt: String!): LeaderboardRow
+  myRecord(playerToken: String!): LeaderboardRow
 }
 
 # A leaderboard row

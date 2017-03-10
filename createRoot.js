@@ -22,8 +22,8 @@ function createRoot ({
                 .then(rank)
               )
             },
-            myRecord ({ jwt }) {
-              return userTokenValidator.validateToken(jwt)
+            myRecord ({ playerToken }) {
+              return playerTokenService.validatePlayerToken(playerToken)
                 .then(tokenInfo => {
                   const playerId = tokenInfo.playerId
                   return fetchLeaderboardRow({ md5, playMode, playerId })
@@ -46,8 +46,8 @@ function createRoot ({
           return player && PublicPlayerData(player)
         })
     },
-    me ({ jwt }) {
-      return userTokenValidator.validateToken(jwt)
+    me ({ playerToken }) {
+      return playerTokenService.validatePlayerToken(playerToken)
         .then(tokenInfo => {
           const playerId = tokenInfo.playerId
           return {
@@ -93,31 +93,27 @@ function createRoot ({
           })
         })
     },
-    registerScore ({ jwt, md5, playMode, input }) {
-      return userTokenValidator.validateToken(jwt)
+    registerScore ({ playerToken, md5, playMode, input }) {
+      return playerTokenService.validatePlayerToken(playerToken)
         .then(tokenInfo => {
-          const userId = tokenInfo.userId
-          return playerRepository.findByUserId(userId).then(player => {
-            if (!player) throw new Error('Player with specified user ID not found.')
-            const playerId = player._id
-            return rankingEntryRepository
-              .fetchLeaderboardEntry({ md5, playMode, playerId })
-              .then(existingEntry => {
-                const existingData = existingEntry && existingEntry.data
-                const nextData = ScoreData.update(existingData, input)
-                return rankingEntryRepository
-                  .saveLeaderboardEntry({ md5, playMode, playerId, data: nextData })
-              })
-              .then(() => {
-                return fetchLeaderboardRow({ md5, playMode, playerId })
-              })
-              .then(row => {
-                return {
-                  resultingRow: row,
-                  level: root.chart({ md5 }).level({ playMode })
-                }
-              })
-          })
+          const playerId = tokenInfo.playerId
+          return rankingEntryRepository
+            .fetchLeaderboardEntry({ md5, playMode, playerId })
+            .then(existingEntry => {
+              const existingData = existingEntry && existingEntry.data
+              const nextData = ScoreData.update(existingData, input)
+              return rankingEntryRepository
+                .saveLeaderboardEntry({ md5, playMode, playerId, data: nextData })
+            })
+            .then(() => {
+              return fetchLeaderboardRow({ md5, playMode, playerId })
+            })
+            .then(row => {
+              return {
+                resultingRow: row,
+                level: root.chart({ md5 }).level({ playMode })
+              }
+            })
         })
     },
     authenticatePlayer ({ jwt }) {
