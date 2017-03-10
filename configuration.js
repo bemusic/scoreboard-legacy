@@ -36,7 +36,7 @@ exports.authentication = {
     ),
     dependencies: { certificateUrl: 'config:jwt:certificateUrl' }
   },
-  'authentication:tokenValidator': {
+  'authentication:userTokenValidator': {
     create: require('./createTokenValidator'),
     dependencies: { certificate: 'authentication:jwt:certificate' }
   }
@@ -85,7 +85,7 @@ exports.api = {
       rankingEntryRepository: 'repository:rankingEntry',
       legacyUserRepository: 'repository:legacyUser',
       playerRepository: 'repository:player',
-      tokenValidator: 'authentication:tokenValidator'
+      tokenValidator: 'authentication:userTokenValidator'
     }
   },
   'api:app': {
