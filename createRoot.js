@@ -154,7 +154,11 @@ function createRoot ({
     return {
       id: player._id,
       name: player.playerName,
-      linked: !!player.linkedTo
+      linked: () => {
+        if (player.linkedTo) return true
+        return legacyUserRepository.findByUsername(player.playerName)
+          .then(foundLegacyUser => !!foundLegacyUser)
+      }
     }
   }
 
